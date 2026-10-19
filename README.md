@@ -27,6 +27,8 @@ While third-party apps cannot query the channel list table, they can still instr
 
 ## Quick Install (Pre-built APK)
 
+You can download the latest pre-built APK directly from [GitHub Releases](https://github.com/hypest/vision-revive-tv/releases) or use the `vision-revive-tv.apk` in the repository root.
+
 From a computer on the same local network:
 
 ```bash

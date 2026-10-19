@@ -14,25 +14,13 @@ android {
         versionName = "1.0"
     }
 
-    signingConfigs {
-        create("debugKeystore") {
-            val ks = file("${System.getProperty("user.home")}/.android/debug.keystore")
-            if (ks.exists()) {
-                storeFile = ks
-                storePassword = "android"
-                keyAlias = "androiddebugkey"
-                keyPassword = "android"
-            }
-        }
-    }
-
     buildTypes {
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("debugKeystore")
+            signingConfig = signingConfigs.getByName("debug")
         }
         debug {
-            signingConfig = signingConfigs.getByName("debugKeystore")
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 
