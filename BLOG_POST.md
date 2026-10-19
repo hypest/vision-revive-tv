@@ -99,9 +99,11 @@ adb connect <box-ip>:5555
 # https://github.com/hypest/vision-revive-tv/releases/latest
 adb install -r vision-revive-tv-*.apk
 
-# Grant log read permission for channel name detection
+# (Optional) Grant log read permission for automatic channel names
 adb shell pm grant org.hypest.visionrevivetv android.permission.READ_LOGS
 ```
+
+*(Note: The log read permission is optional. Tuning, playback, and subtitles work without it, and you can always name channels using the "Name Ch" button on the side panel).*
 
 ### 3. Scan Channels
 
