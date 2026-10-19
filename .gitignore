@@ -1,12 +1,11 @@
-# Build outputs and intermediate files
-build/
-*.dex
-*.class
-*.idsig
-
-# OS and IDE files
-.DS_Store
-Thumbs.db
-.idea/
 *.iml
-.vscode/
+.gradle
+/local.properties
+/.idea/
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+app/build/
+*.idsig

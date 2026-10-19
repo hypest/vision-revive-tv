@@ -52,44 +52,51 @@ adb shell pm grant org.hypest.visionrevivetv android.permission.READ_LOGS
 
 ## Building from Source
 
-To build the APK locally:
+This project uses the standard Android Gradle build system. You can open it directly in Android Studio or build it from the command line using the included Gradle wrapper.
 
-### Prerequisites
-
-- Python 3
-- Android SDK with:
-  - Platform `android-28`
-  - Build-tools (e.g. `35.0.0`)
-  - A debug keystore at `~/.android/debug.keystore`
-
-### Build Command
+### Build Commands
 
 ```bash
-python3 build.py
+# Build the signed release APK
+./gradlew assembleRelease
+
+# Or build the debug APK
+./gradlew assembleDebug
 ```
 
-This compiles Java sources, dexes classes via `d8`, packages resources with `aapt`, zip-aligns, and signs `vision-revive-tv.apk`.
+The output APK will be generated at:
+- `app/build/outputs/apk/release/app-release.apk`
+- `app/build/outputs/apk/debug/app-debug.apk`
 
 ## Project Structure
 
 ```text
 vision-revive-tv/
-├── AndroidManifest.xml
-├── build.py
-├── .gitignore
+├── gradlew
+├── gradlew.bat
+├── gradle/wrapper/
+│   ├── gradle-wrapper.jar
+│   └── gradle-wrapper.properties
+├── settings.gradle.kts
+├── build.gradle.kts
+├── gradle.properties
 ├── README.md
 ├── BLOG_POST.md
 ├── screenshot-scan.png
 ├── screenshot-live.png
 ├── vision-revive-tv.apk
-├── res/
-│   ├── drawable/
-│   │   └── banner.xml
-│   └── values/
-│       └── strings.xml
-└── src/
-    └── org/hypest/visionrevivetv/
-        └── MainActivity.java
+└── app/
+    ├── build.gradle.kts
+    └── src/main/
+        ├── AndroidManifest.xml
+        ├── java/org/hypest/visionrevivetv/
+        │   └── MainActivity.java
+        └── res/
+            ├── drawable/
+            │   ├── banner.png
+            │   └── ic_launcher.png
+            └── values/
+                └── strings.xml
 ```
 
 ## Disclaimer
