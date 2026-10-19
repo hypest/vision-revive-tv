@@ -95,10 +95,9 @@ From a computer on the same local network:
 # Connect to the box
 adb connect <box-ip>:5555
 
-# Clone the repo and install the APK
-git clone https://github.com/hypest/vision-revive-tv.git
-cd vision-revive-tv
-adb install -r vision-revive-tv.apk
+# Download the latest APK from GitHub Releases:
+# https://github.com/hypest/vision-revive-tv/releases/latest
+adb install -r vision-revive-tv-*.apk
 
 # Grant log read permission for channel name detection
 adb shell pm grant org.hypest.visionrevivetv android.permission.READ_LOGS
@@ -118,7 +117,7 @@ The app will tune the channels and resolve their names.
 
 ---
 
-The code and APK are available on GitHub: [github.com/hypest/vision-revive-tv](https://github.com/hypest/vision-revive-tv).
+The code and releases are available on GitHub: [github.com/hypest/vision-revive-tv](https://github.com/hypest/vision-revive-tv).
 
 If you give it a try on your box, let me know how it goes!
 

@@ -27,7 +27,7 @@ While third-party apps cannot query the channel list table, they can still instr
 
 ## Quick Install (Pre-built APK)
 
-You can download the latest pre-built APK directly from [GitHub Releases](https://github.com/hypest/vision-revive-tv/releases) or use the `vision-revive-tv.apk` in the repository root.
+Download the latest pre-built APK from [GitHub Releases](https://github.com/hypest/vision-revive-tv/releases/latest).
 
 From a computer on the same local network:
 
@@ -35,8 +35,8 @@ From a computer on the same local network:
 # 1. Connect via ADB (enable Network Debugging in Developer Options first)
 adb connect <box-ip>:5555
 
-# 2. Install the application
-adb install -r vision-revive-tv.apk
+# 2. Install the downloaded APK
+adb install -r vision-revive-tv-*.apk
 
 # 3. Grant log read permission (required for automatic channel name resolution)
 adb shell pm grant org.hypest.visionrevivetv android.permission.READ_LOGS
@@ -86,7 +86,6 @@ vision-revive-tv/
 ├── BLOG_POST.md
 ├── screenshot-scan.png
 ├── screenshot-live.png
-├── vision-revive-tv.apk
 └── app/
     ├── build.gradle.kts
     └── src/main/
