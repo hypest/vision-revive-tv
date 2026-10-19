@@ -14,10 +14,32 @@ android {
         versionName = "1.0"
     }
 
+    signingConfigs {
+        create("release") {
+            val keystorePath = System.getenv("RELEASE_KEYSTORE_PATH")
+            val keystorePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD")
+            val keyAlias = System.getenv("RELEASE_KEY_ALIAS")
+            val keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
+
+            if (!keystorePath.isNullOrEmpty() && file(keystorePath).exists()) {
+                storeFile = file(keystorePath)
+                storePassword = keystorePassword
+                this.keyAlias = keyAlias
+                this.keyPassword = keyPassword
+            } else {
+                val debugConfig = getByName("debug")
+                storeFile = debugConfig.storeFile
+                storePassword = debugConfig.storePassword
+                this.keyAlias = debugConfig.keyAlias
+                this.keyPassword = debugConfig.keyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
         }
         debug {
             signingConfig = signingConfigs.getByName("debug")
