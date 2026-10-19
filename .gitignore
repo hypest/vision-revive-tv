@@ -1,0 +1,12 @@
+# Build outputs and intermediate files
+build/
+*.dex
+*.class
+*.idsig
+
+# OS and IDE files
+.DS_Store
+Thumbs.db
+.idea/
+*.iml
+.vscode/
