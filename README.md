@@ -46,7 +46,7 @@ adb shell pm grant org.hypest.visionrevivetv android.permission.READ_LOGS
 > Step 3 is **completely optional**.
 > - **What it's for**: The app monitors Technicolor's tuner logs to automatically match internal channel IDs with broadcast station names (e.g. "ERT 1 HD", "MEGA HD") after scanning.
 > - **If you don't grant it**: Live TV playback, hardware video decoding, audio switching, DVB subtitles, remote zapping, and antenna scanning **all work 100% without it**.
-> - Default channel IDs for Attica are already pre-labeled in the app. If your scanned IDs differ or you are in a different region, you can easily name or rename any channel directly from your remote: press `OK` on the remote to open the side panel and select **Name Ch** to pick from a list of Greek channel presets (or type a custom name).
+> - Default channel IDs for Thessaloniki (Greece) are already pre-labeled in the app. If your scanned IDs differ or you are in a different region, you can easily name or rename any channel directly from your remote: press `OK` on the remote to open the side panel and select **Name Ch** to pick from a list of Greek channel presets (or type a custom name).
 
 ### First-Time Setup
 
