@@ -57,8 +57,8 @@ public class MainActivity extends Activity {
     private static final String KEY_DVB_PREFIX = "ch_dvb_";
 
     // Default scanned channel IDs from the most recent scan (603..649, 47 channels)
-    private static final int DEFAULT_START_ID = 603;
-    private static final int DEFAULT_END_ID = 649;
+    private static final int DEFAULT_START_ID = 650;
+    private static final int DEFAULT_END_ID = 696;
 
     private static final String[] GREEK_CHANNEL_PRESETS = new String[]{
         "ERT 1 HD", "ERT 2 HD", "ERT 3 HD", "ERT NEWS HD", "VOULI TV",
@@ -70,56 +70,59 @@ public class MainActivity extends Activity {
         "EURONEWS", "RIK SAT", "TV5 MONDE", "BBC WORLD"
     };
 
-    public static final Map<Long, String> KNOWN_SCANNED_TRIPLETS = new LinkedHashMap<Long, String>();
-    static {
-        KNOWN_SCANNED_TRIPLETS.put(603L, "dvb://212c.197.111c");
-        KNOWN_SCANNED_TRIPLETS.put(604L, "dvb://212c.195.1090");
-        KNOWN_SCANNED_TRIPLETS.put(605L, "dvb://212c.69.ce4");
-        KNOWN_SCANNED_TRIPLETS.put(606L, "dvb://212c.65.44c");
-        KNOWN_SCANNED_TRIPLETS.put(607L, "dvb://212c.67.6a4");
-        KNOWN_SCANNED_TRIPLETS.put(608L, "dvb://212c.195.10c2");
-        KNOWN_SCANNED_TRIPLETS.put(609L, "dvb://212c.2.e");
-        KNOWN_SCANNED_TRIPLETS.put(610L, "dvb://212c.2.d");
-        KNOWN_SCANNED_TRIPLETS.put(611L, "dvb://212c.2.c");
-        KNOWN_SCANNED_TRIPLETS.put(612L, "dvb://212c.2.1f");
-        KNOWN_SCANNED_TRIPLETS.put(613L, "dvb://212c.2.b");
-        KNOWN_SCANNED_TRIPLETS.put(614L, "dvb://212c.2.a");
-        KNOWN_SCANNED_TRIPLETS.put(615L, "dvb://212c.195.10ae");
-        KNOWN_SCANNED_TRIPLETS.put(616L, "dvb://212c.65.514");
-        KNOWN_SCANNED_TRIPLETS.put(617L, "dvb://212c.65.578");
-        KNOWN_SCANNED_TRIPLETS.put(618L, "dvb://212c.2.29");
-        KNOWN_SCANNED_TRIPLETS.put(619L, "dvb://212c.2.28");
-        KNOWN_SCANNED_TRIPLETS.put(620L, "dvb://212c.197.1112");
-        KNOWN_SCANNED_TRIPLETS.put(621L, "dvb://212c.195.10b8");
-        KNOWN_SCANNED_TRIPLETS.put(622L, "dvb://212c.69.c1c");
-        KNOWN_SCANNED_TRIPLETS.put(623L, "dvb://212c.2.23");
-        KNOWN_SCANNED_TRIPLETS.put(624L, "dvb://212c.2.22");
-        KNOWN_SCANNED_TRIPLETS.put(625L, "dvb://212c.2.21");
-        KNOWN_SCANNED_TRIPLETS.put(626L, "dvb://212c.2.20");
-        KNOWN_SCANNED_TRIPLETS.put(627L, "dvb://212c.65.4b0");
-        KNOWN_SCANNED_TRIPLETS.put(628L, "dvb://212c.69.dac");
-        KNOWN_SCANNED_TRIPLETS.put(629L, "dvb://212c.2.9");
-        KNOWN_SCANNED_TRIPLETS.put(630L, "dvb://212c.197.1108");
-        KNOWN_SCANNED_TRIPLETS.put(631L, "dvb://212c.67.5dc");
-        KNOWN_SCANNED_TRIPLETS.put(632L, "dvb://212c.195.10a4");
-        KNOWN_SCANNED_TRIPLETS.put(633L, "dvb://212c.69.c80");
-        KNOWN_SCANNED_TRIPLETS.put(634L, "dvb://212c.2.17");
-        KNOWN_SCANNED_TRIPLETS.put(635L, "dvb://212c.2.16");
-        KNOWN_SCANNED_TRIPLETS.put(636L, "dvb://212c.69.e74");
-        KNOWN_SCANNED_TRIPLETS.put(637L, "dvb://212c.69.e10");
-        KNOWN_SCANNED_TRIPLETS.put(638L, "dvb://212c.2.15");
-        KNOWN_SCANNED_TRIPLETS.put(639L, "dvb://212c.2.14");
-        KNOWN_SCANNED_TRIPLETS.put(640L, "dvb://212c.67.640");
-        KNOWN_SCANNED_TRIPLETS.put(641L, "dvb://212c.1.7");
-        KNOWN_SCANNED_TRIPLETS.put(642L, "dvb://212c.69.d48");
-        KNOWN_SCANNED_TRIPLETS.put(643L, "dvb://212c.195.10a4");
-        KNOWN_SCANNED_TRIPLETS.put(644L, "dvb://212c.1.6");
-        KNOWN_SCANNED_TRIPLETS.put(645L, "dvb://212c.1.5");
-        KNOWN_SCANNED_TRIPLETS.put(646L, "dvb://212c.1.4");
-        KNOWN_SCANNED_TRIPLETS.put(647L, "dvb://212c.1.3");
-        KNOWN_SCANNED_TRIPLETS.put(648L, "dvb://212c.1.2");
-        KNOWN_SCANNED_TRIPLETS.put(649L, "dvb://212c.1.1");
-    }
+    /**
+     * Complete sequential DVB service triplets produced by antenna scan in Attica/Greece
+     * on the Technicolor DSI724HN DtvInputService tuner.
+     */
+    public static final String[] STANDARD_GREEK_TRIPLETS_IN_ORDER = new String[]{
+        "dvb://212c.197.111c", // 01: ERT 1
+        "dvb://212c.195.1090", // 02: ERT 1 HD
+        "dvb://212c.69.ce4",  // 03: ONE CHANNEL
+        "dvb://212c.65.44c",  // 04: ALPHA HD
+        "dvb://212c.67.6a4",  // 05: MAK TV HD
+        "dvb://212c.195.10c2", // 06: ERT 3 HD
+        "dvb://212c.2.e",     // 07: ALPHA
+        "dvb://212c.2.d",     // 08: ANT1
+        "dvb://212c.2.c",     // 09: MEGA
+        "dvb://212c.2.1f",    // 10: EXTRA CHANNEL
+        "dvb://212c.2.b",     // 11: ART TV
+        "dvb://212c.2.a",     // 12: HIGH TV
+        "dvb://212c.195.10ae", // 13: ERT 2 HD
+        "dvb://212c.65.514",  // 14: OPEN BEYOND HD
+        "dvb://212c.65.578",  // 15: STAR HD
+        "dvb://212c.2.29",    // 16: TV 1
+        "dvb://212c.2.28",    // 17: MILOS TV
+        "dvb://212c.197.1112", // 18: ERT News
+        "dvb://212c.195.10b8", // 19: ERT 2
+        "dvb://212c.69.c1c",  // 20: ACTION 24
+        "dvb://212c.2.23",    // 21: ALERT
+        "dvb://212c.2.22",    // 22: NEW EPSILON
+        "dvb://212c.2.21",    // 23: RISE TV
+        "dvb://212c.2.20",    // 24: NICKELODEON PLUS
+        "dvb://212c.65.4b0",  // 25: ANT1 HD
+        "dvb://212c.69.dac",  // 26: BLUE SKY
+        "dvb://212c.2.9",     // 27: MAD TV
+        "dvb://212c.197.1108", // 28: VOULI TV
+        "dvb://212c.67.5dc",  // 29: SKAI HD
+        "dvb://212c.197.10cc", // 30: ERT 3
+        "dvb://212c.69.c80",  // 31: ATTICA TV
+        "dvb://212c.2.17",    // 32: MAK TV
+        "dvb://212c.2.16",    // 33: OPEN BEYOND
+        "dvb://212c.69.e74",  // 34: SMILE TV
+        "dvb://212c.69.e10",  // 35: ALERT TV
+        "dvb://212c.2.15",    // 36: SKAI
+        "dvb://212c.2.14",    // 37: STAR
+        "dvb://212c.67.640",  // 38: MEGA HD
+        "dvb://212c.1.7",     // 39: ERT Cosmos (Radio)
+        "dvb://212c.69.d48",  // 40: KONTRA CHANNEL
+        "dvb://212c.195.10a4", // 41: ERT News HD
+        "dvb://212c.1.6",     // 42: Voice of Greece (Radio)
+        "dvb://212c.1.5",     // 43: Kosmos 93.6 (Radio)
+        "dvb://212c.1.4",     // 44: ERA Sport 101.8 (Radio)
+        "dvb://212c.1.3",     // 45: Trito 90.9 (Radio)
+        "dvb://212c.1.2",     // 46: Deftero 103.7 (Radio)
+        "dvb://212c.1.1"      // 47: Proto 91.6 (Radio)
+    };
 
     public static final Map<String, String> GREEK_DVB_CATALOG = new LinkedHashMap<String, String>();
     static {
@@ -129,6 +132,7 @@ public class MainActivity extends Activity {
         GREEK_DVB_CATALOG.put("dvb://212c.195.10c2", "ERT 3 HD");
         GREEK_DVB_CATALOG.put("dvb://212c.195.10a4", "ERT News HD");
         GREEK_DVB_CATALOG.put("dvb://212c.195.10b8", "ERT 2");
+        GREEK_DVB_CATALOG.put("dvb://212c.197.10cc", "ERT 3");
         GREEK_DVB_CATALOG.put("dvb://212c.197.1108", "VOULI TV");
         GREEK_DVB_CATALOG.put("dvb://212c.197.1112", "ERT News");
         GREEK_DVB_CATALOG.put("dvb://212c.197.111c", "ERT 1");
@@ -250,6 +254,7 @@ public class MainActivity extends Activity {
     private long mFoundStartId = -1;
     private long mFoundEndId = -1;
     private boolean mAutoProbedThisSession = false;
+    private boolean mWaitingForScannerReturn = false;
     private long mLastTuneTuningCallbackMs = 0;
 
     private final Handler mHandler = new Handler(Looper.getMainLooper());
@@ -258,10 +263,44 @@ public class MainActivity extends Activity {
         @Override
         public void run() {
             if (mProbeStage != PROBE_STAGE_IDLE && mCurrentProbeId > 0) {
-                onProbeCandidateResult(mCurrentProbeId, true);
+                checkProbeCandidateQuickLogcat(mCurrentProbeId);
             }
         }
     };
+
+    private void checkProbeCandidateQuickLogcat(final long candidateId) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                boolean found = false;
+                try {
+                    Process proc = Runtime.getRuntime().exec(new String[]{
+                        "logcat", "-d", "-t", "40", "-s", "DtvInputSession:D", "DTVFS:V"
+                    });
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+                    String line;
+                    boolean tunedCandidate = false;
+                    while ((line = reader.readLine()) != null) {
+                        if (line.contains("onTune(content://android.media.tv/channel/" + candidateId)) {
+                            tunedCandidate = true;
+                        } else if (tunedCandidate && line.contains("DTVFS::Open")) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    reader.close();
+                } catch (Exception ignored) {
+                }
+                final boolean exists = found;
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        onProbeCandidateResult(candidateId, exists);
+                    }
+                });
+            }
+        }).start();
+    }
 
     private final Runnable mHideOsdRunnable = new Runnable() {
         @Override
@@ -356,6 +395,16 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        if (mWaitingForScannerReturn) {
+            mWaitingForScannerReturn = false;
+            mHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    startAutoProbeChannels(true);
+                }
+            }, 600);
+            return;
+        }
         discoverChannelsFromLogcatAsync(false);
         if (mProbeStage == PROBE_STAGE_IDLE && !mChannels.isEmpty()) {
             tuneToIndex(mCurrentIndex);
@@ -395,11 +444,8 @@ public class MainActivity extends Activity {
             public void onVideoUnavailable(String inputId, int reason) {
                 if (mProbeStage != PROBE_STAGE_IDLE && mCurrentProbeId > 0) {
                     if (reason == TvInputManager.VIDEO_UNAVAILABLE_REASON_TUNING) {
-                        // DtvInputSession has started processing onTune; if it does not fail
-                        // with REASON_UNKNOWN (0) within 550ms, the channel exists in TvProvider!
-                        // (Misses can take up to ~310ms to be reported, so 220ms gave false hits.)
                         mHandler.removeCallbacks(mProbeHitTimeoutRunnable);
-                        mHandler.postDelayed(mProbeHitTimeoutRunnable, 550);
+                        mHandler.postDelayed(mProbeHitTimeoutRunnable, 400);
                     } else if (reason == TvInputManager.VIDEO_UNAVAILABLE_REASON_UNKNOWN) {
                         // Immediate failure (/channel/<id> not found in TvProvider)
                         mHandler.removeCallbacks(mProbeHitTimeoutRunnable);
@@ -674,10 +720,11 @@ public class MainActivity extends Activity {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         mChannels.clear();
         int num = 1;
-        for (Long id : ids) {
+        for (int i = 0; i < ids.size(); i++) {
+            Long id = ids.get(i);
             String savedDvb = prefs.getString(KEY_DVB_PREFIX + id, null);
-            if ((savedDvb == null || savedDvb.isEmpty()) && KNOWN_SCANNED_TRIPLETS.containsKey(id)) {
-                savedDvb = KNOWN_SCANNED_TRIPLETS.get(id);
+            if ((savedDvb == null || savedDvb.isEmpty()) && i < STANDARD_GREEK_TRIPLETS_IN_ORDER.length) {
+                savedDvb = STANDARD_GREEK_TRIPLETS_IN_ORDER[i];
             }
             String catalogName = lookupChannelName(savedDvb);
             String savedName = prefs.getString(KEY_NAME_PREFIX + id, null);
@@ -765,7 +812,7 @@ public class MainActivity extends Activity {
             public void run() {
                 try {
                     Process proc = Runtime.getRuntime().exec(new String[]{
-                        "logcat", "-d", "-t", "40", "-s", "DTVFS:V", "TvPlayer:I", "DtvSetup:I"
+                        "logcat", "-d", "-t", "80", "-s", "DtvInputSession:D", "DTVFS:V", "TvPlayer:I", "DtvSetup:I"
                     });
                     BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
                     Pattern dvbPattern = Pattern.compile("DTVFS::Open:\\d+\\s+path=/live/dvb:([0-9a-zA-Z._-]+)/media\\.ts");
@@ -1025,6 +1072,7 @@ public class MainActivity extends Activity {
     private void launchTechnicolorOtaScanner() {
         stopAutoProbe();
         mAutoProbedThisSession = false;
+        mWaitingForScannerReturn = true;
         try {
             TvInputManager tim = (TvInputManager) getSystemService(Context.TV_INPUT_SERVICE);
             if (tim != null) {
@@ -1094,7 +1142,7 @@ public class MainActivity extends Activity {
 
         mHandler.removeCallbacks(mProbeHitTimeoutRunnable);
         // Fallback timeout in case REASON_TUNING callback is coalesced
-        mHandler.postDelayed(mProbeHitTimeoutRunnable, 1200);
+        mHandler.postDelayed(mProbeHitTimeoutRunnable, 450);
 
         if (mTvView != null) {
             mTvView.tune(DTV_INPUT_ID, Uri.parse("content://android.media.tv/channel/" + candidateId));
@@ -1179,9 +1227,21 @@ public class MainActivity extends Activity {
                 stopAutoProbe();
                 if (mFoundStartId > 0 && mFoundEndId >= mFoundStartId) {
                     List<Long> discoveredIds = new ArrayList<Long>();
-                    for (long id = mFoundStartId; id <= mFoundEndId; id++) {
+                    SharedPreferences.Editor editor = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit();
+                    int count = (int) (mFoundEndId - mFoundStartId + 1);
+                    for (int i = 0; i < count; i++) {
+                        long id = mFoundStartId + i;
                         discoveredIds.add(id);
+                        if (i < STANDARD_GREEK_TRIPLETS_IN_ORDER.length) {
+                            String dvb = STANDARD_GREEK_TRIPLETS_IN_ORDER[i];
+                            editor.putString(KEY_DVB_PREFIX + id, dvb);
+                            String name = lookupChannelName(dvb);
+                            if (name != null) {
+                                editor.putString(KEY_NAME_PREFIX + id, name);
+                            }
+                        }
                     }
+                    editor.apply();
                     saveChannelIdsToPrefs(discoveredIds);
                     rebuildChannelEntries(discoveredIds);
                     Toast.makeText(this,
@@ -1316,10 +1376,10 @@ public class MainActivity extends Activity {
                     android.util.Log.e("OtaTvChannels", "Error querying TvContract.Channels", e);
                 }
 
-                // 2. Parse system logcat for DtvChannel, DtvSetup, DTVFS and TvPlayer logs
+                // 2. Parse system logcat for DtvChannel, DtvInputSession, DtvSetup, DTVFS and TvPlayer logs
                 try {
                     Process proc = Runtime.getRuntime().exec(new String[]{
-                        "logcat", "-d", "-s", "DtvChannel:D", "DtvChannelManager:D", "DtvSetup:D", "DtvSetup:I", "DTVFS:V", "TvPlayer:I"
+                        "logcat", "-d", "-s", "DtvInputSession:D", "DtvChannel:D", "DtvChannelManager:D", "DtvSetup:D", "DtvSetup:I", "DTVFS:V", "TvPlayer:I"
                     });
                     BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
                     Pattern chPattern = Pattern.compile(
@@ -1330,8 +1390,8 @@ public class MainActivity extends Activity {
                             "\\((\\d+)-([^)]+)\\)\\s+programs\\s+updated");
                     Pattern dtvfsPattern = Pattern.compile(
                             "DTVFS::Open:\\d+\\s+path=/live/dvb:([0-9a-zA-Z._-]+)/media\\.ts");
-                    Pattern tvPlayerPattern = Pattern.compile(
-                            "TvPlayer:\\s+start,\\s+uri:'content://android\\.media\\.tv/channel/(\\d+)'");
+                    Pattern tunePattern = Pattern.compile(
+                            "(?:onTune\\(content://android\\.media\\.tv/channel/(\\d+)|TvPlayer:\\s+start,\\s+uri:'content://android\\.media\\.tv/channel/(\\d+)')");
 
                     final Map<String, String> tripletToName = new LinkedHashMap<String, String>();
                     final Map<String, Integer> tripletToNum = new LinkedHashMap<String, Integer>();
@@ -1343,10 +1403,11 @@ public class MainActivity extends Activity {
                         if (line.contains("deletePreviouslyScannedChannels")) {
                             discoveredDvbs.clear();
                         }
-                        Matcher mt = tvPlayerPattern.matcher(line);
+                        Matcher mt = tunePattern.matcher(line);
                         if (mt.find()) {
                             try {
-                                lastSeenPlayerId = Long.parseLong(mt.group(1));
+                                String idStr = mt.group(1) != null ? mt.group(1) : mt.group(2);
+                                lastSeenPlayerId = Long.parseLong(idStr);
                             } catch (Exception ignored) {}
                         }
                         Matcher mdf = dtvfsPattern.matcher(line);
