@@ -10,8 +10,8 @@ android {
         applicationId = "org.hypest.visionrevivetv"
         minSdk = 28
         targetSdk = 28
-        versionCode = 4
-        versionName = "0.3.1"
+        versionCode = 5
+        versionName = "0.4.0"
     }
 
     signingConfigs {
