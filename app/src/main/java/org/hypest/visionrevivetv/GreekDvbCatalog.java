@@ -14,14 +14,14 @@ public final class GreekDvbCatalog {
 
     static {
         // --- ERT National Multiplexes ---
-        CATALOG.put("dvb://212c.195.1090", "ERT 1 HD");
-        CATALOG.put("dvb://212c.195.10ae", "ERT 2 HD");
+        CATALOG.put("dvb://212c.195.10ae", "ERT 1 HD");
         CATALOG.put("dvb://212c.195.10b8", "ERT 2");
         CATALOG.put("dvb://212c.195.10c2", "ERT 3 HD");
         CATALOG.put("dvb://212c.195.10a4", "ERT NEWS HD");
         CATALOG.put("dvb://212c.197.1108", "VOULI TV");
-        CATALOG.put("dvb://212c.197.1112", "ERT NEWS");
-        CATALOG.put("dvb://212c.197.111c", "ERT 2 SPORT");
+        CATALOG.put("dvb://212c.197.1112", "ERT 2");
+        CATALOG.put("dvb://212c.197.111c", "ERT 2");
+        CATALOG.put("dvb://212c.2.28", "ERT 1");
 
         // --- Digea National Commercial HD Muxes ---
         CATALOG.put("dvb://212c.65.44c", "ALPHA HD");
@@ -30,7 +30,7 @@ public final class GreekDvbCatalog {
         CATALOG.put("dvb://212c.65.578", "OPEN BEYOND HD");
         CATALOG.put("dvb://212c.67.5dc", "SKAI HD");
         CATALOG.put("dvb://212c.67.640", "MEGA HD");
-        CATALOG.put("dvb://212c.67.6a4", "SKAI HD");
+        CATALOG.put("dvb://212c.67.6a4", "STAR HD");
         CATALOG.put("dvb://212c.67.708", "STAR HD");
         CATALOG.put("dvb://212c.69.c80", "OPEN BEYOND");
         CATALOG.put("dvb://212c.69.ce4", "MAK TV");
@@ -49,6 +49,7 @@ public final class GreekDvbCatalog {
         // --- Central Macedonia Regional Channels (Thessaloniki) ---
         CATALOG.put("dvb://212c.2.a", "4E");
         CATALOG.put("dvb://212c.2.b", "ΒΕΡΓΙΝΑ");
+        CATALOG.put("dvb://212c.195.1090", "ΒΕΡΓΙΝΑ");
         CATALOG.put("dvb://212c.2.1f", "EUROPE ONE");
         CATALOG.put("dvb://212c.2.20", "EURO TV");
         CATALOG.put("dvb://212c.2.21", "TV 100");

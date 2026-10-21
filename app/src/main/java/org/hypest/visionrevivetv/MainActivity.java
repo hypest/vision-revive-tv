@@ -7,16 +7,19 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
-import android.database.Cursor;
 import android.media.tv.TvContract;
 import android.media.tv.TvInputInfo;
 import android.media.tv.TvInputManager;
 import android.media.tv.TvTrackInfo;
 import android.media.tv.TvView;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -24,6 +27,8 @@ import android.text.InputType;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.PixelCopy;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -40,6 +45,8 @@ import android.widget.Toast;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -56,7 +63,7 @@ public class MainActivity extends Activity {
     private static final String DTV_INPUT_ID = "com.technicolor.android.dtvinput/.DtvInputService";
     private static final String PREFS_NAME = "ota_tv_prefs";
     private static final String KEY_PREFS_VERSION = "prefs_version";
-    private static final int CURRENT_PREFS_VERSION = 3;
+    private static final int CURRENT_PREFS_VERSION = 4;
     private static final String KEY_LAST_INDEX = "last_channel_index";
     private static final String KEY_CHANNEL_IDS = "channel_ids_csv";
     private static final String KEY_NAME_PREFIX = "ch_name_";
@@ -259,6 +266,12 @@ public class MainActivity extends Activity {
      */
     private boolean handleControlIntent(Intent intent) {
         if (intent == null) return false;
+        if (intent.getBooleanExtra("screenshot", false)) {
+            intent.removeExtra("screenshot");
+            File out = new File(getExternalFilesDir(null), "snap.png");
+            captureScreenToFile(out);
+            return true;
+        }
         int targetIdx = intent.getIntExtra("index", -1);
         if (targetIdx >= 0 && targetIdx < mChannels.size()) {
             intent.removeExtra("index");
@@ -344,6 +357,7 @@ public class MainActivity extends Activity {
         mTvView.setCallback(new TvView.TvInputCallback() {
             @Override
             public void onVideoAvailable(String inputId) {
+                disableSecureSurface(mTvView);
                 if (mProbeStage != PROBE_STAGE_IDLE && mCurrentProbeId > 0) {
                     mHandler.removeCallbacks(mProbeHitTimeoutRunnable);
                     onProbeCandidateResult(mCurrentProbeId, true);
@@ -794,6 +808,7 @@ public class MainActivity extends Activity {
             mTvView.setStreamVolume(1.0f);
             mTvView.setCaptionEnabled(true);
             mTvView.tune(DTV_INPUT_ID, ch.getUri());
+            disableSecureSurface(mTvView);
         }
 
         mHandler.removeCallbacks(mCheckTunedChannelLogRunnable);
@@ -817,11 +832,11 @@ public class MainActivity extends Activity {
             public void run() {
                 try {
                     Process proc = Runtime.getRuntime().exec(new String[]{
-                        "logcat", "-d", "-t", "300", "-s", "DtvInputSession:D", "DTVFS:V", "TvPlayer:I", "DtvSetup:I", "DtvSetup:D", "DtvChannel:D", "dtv.EitHandler:V"
+                        "logcat", "-d", "-t", "100", "-s", "DtvInputSession:D", "DTVFS:V", "TvPlayer:I", "DtvSetup:I", "dtv.EitHandler:V"
                     });
                     BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
                     Pattern dvbPattern = Pattern.compile("DTVFS::Open:\\d+\\s+path=/live/dvb:([0-9a-zA-Z._-]+)/media\\.ts");
-                    Pattern servicePattern = Pattern.compile("(?:Service\\s+dvb://|service:)([0-9a-zA-Z._-]+)");
+                    Pattern zapPattern = Pattern.compile("zap on dvb://([0-9a-zA-Z._-]+)");
                     Pattern dumpPattern = Pattern.compile("(dvb://[0-9a-zA-Z._-]+)\\s*:\\s*(.+?)\\s+lcn=(\\d+)");
                     Pattern chPattern = Pattern.compile("Service\\s+(dvb://[0-9a-zA-Z._-]+)\\s+created\\s+->content://android\\.media\\.tv/channel/" + currentCh.id);
 
@@ -840,9 +855,9 @@ public class MainActivity extends Activity {
                         if (md.find()) {
                             foundDvb = "dvb://" + md.group(1);
                         }
-                        Matcher ms = servicePattern.matcher(line);
-                        if (ms.find()) {
-                            foundDvb = "dvb://" + ms.group(1);
+                        Matcher mz = zapPattern.matcher(line);
+                        if (mz.find()) {
+                            foundDvb = "dvb://" + mz.group(1);
                         }
                         Matcher mDump = dumpPattern.matcher(line);
                         if (mDump.find()) {
@@ -895,15 +910,13 @@ public class MainActivity extends Activity {
                             @Override
                             public void run() {
                                 boolean changed = false;
-                                boolean orderOrIdentityChanged = false;
-                                if (finalDvb != null && (currentCh.dvbTriplet == null || currentCh.dvbTriplet.isEmpty())) {
+                                if (finalDvb != null && (currentCh.dvbTriplet == null || currentCh.dvbTriplet.isEmpty() || !finalDvb.equals(currentCh.dvbTriplet))) {
                                     currentCh.dvbTriplet = finalDvb;
                                     getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                                             .edit()
                                             .putString(KEY_DVB_PREFIX + currentCh.id, finalDvb)
                                             .apply();
                                     changed = true;
-                                    orderOrIdentityChanged = true;
                                 }
                                 if (finalName != null && !finalName.isEmpty() && isDefaultName(currentCh.name)) {
                                     currentCh.name = finalName;
@@ -912,7 +925,6 @@ public class MainActivity extends Activity {
                                             .putString(KEY_NAME_PREFIX + currentCh.id, finalName)
                                             .apply();
                                     changed = true;
-                                    orderOrIdentityChanged = true;
                                 }
                                 boolean newEpgArrived = false;
                                 if (finalProgramTitle != null && !finalProgramTitle.equals(currentCh.currentProgramTitle)) {
@@ -921,12 +933,8 @@ public class MainActivity extends Activity {
                                     changed = true;
                                     newEpgArrived = true;
                                 }
-                                if (orderOrIdentityChanged) {
-                                    sortAndRefreshChannels(true);
-                                } else if (changed) {
-                                    refreshChannelLabels();
-                                }
                                 if (changed) {
+                                    refreshChannelLabels();
                                     if (mCurrentIndex >= 0 && mCurrentIndex < mChannels.size() && mChannels.get(mCurrentIndex).id == currentCh.id) {
                                         updateOsdText();
                                         if (newEpgArrived) {
@@ -948,6 +956,71 @@ public class MainActivity extends Activity {
                 }
             }
         }).start();
+    }
+
+    public void captureScreenToFile(final File file) {
+        try {
+            final View decor = getWindow().getDecorView();
+            int w = decor.getWidth();
+            int h = decor.getHeight();
+            if (w <= 0 || h <= 0) {
+                w = 1920;
+                h = 1080;
+            }
+            final Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                try {
+                    PixelCopy.request(getWindow(), bmp, new PixelCopy.OnPixelCopyFinishedListener() {
+                        @Override
+                        public void onPixelCopyFinished(int copyResult) {
+                            if (copyResult == PixelCopy.SUCCESS) {
+                                saveBitmapToFile(bmp, file);
+                            } else {
+                                drawDecorAndSave(decor, bmp, file);
+                            }
+                        }
+                    }, mHandler);
+                    return;
+                } catch (Exception ignored) {
+                }
+            }
+            drawDecorAndSave(decor, bmp, file);
+        } catch (Exception e) {
+            android.util.Log.e("VisionReviveTv", "Screenshot failed", e);
+        }
+    }
+
+    private void drawDecorAndSave(View decor, Bitmap bmp, File file) {
+        Canvas canvas = new Canvas(bmp);
+        decor.draw(canvas);
+        saveBitmapToFile(bmp, file);
+    }
+
+    private void saveBitmapToFile(Bitmap bmp, File file) {
+        try {
+            FileOutputStream fos = new FileOutputStream(file);
+            bmp.compress(Bitmap.CompressFormat.PNG, 90, fos);
+            fos.flush();
+            fos.close();
+            bmp.recycle();
+            android.util.Log.i("VisionReviveTv", "Screenshot saved to " + file.getAbsolutePath());
+        } catch (Exception e) {
+            android.util.Log.e("VisionReviveTv", "Failed saving bitmap", e);
+        }
+    }
+
+    private void disableSecureSurface(ViewGroup vg) {
+        if (vg == null) return;
+        for (int i = 0; i < vg.getChildCount(); i++) {
+            View child = vg.getChildAt(i);
+            if (child instanceof SurfaceView) {
+                try {
+                    ((SurfaceView) child).setSecure(false);
+                } catch (Exception ignored) {}
+            } else if (child instanceof ViewGroup) {
+                disableSecureSurface((ViewGroup) child);
+            }
+        }
     }
 
     private void showOsdBanner() {
