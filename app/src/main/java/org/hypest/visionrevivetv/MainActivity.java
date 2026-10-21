@@ -63,7 +63,7 @@ public class MainActivity extends Activity {
     private static final String DTV_INPUT_ID = "com.technicolor.android.dtvinput/.DtvInputService";
     private static final String PREFS_NAME = "ota_tv_prefs";
     private static final String KEY_PREFS_VERSION = "prefs_version";
-    private static final int CURRENT_PREFS_VERSION = 5;
+    private static final int CURRENT_PREFS_VERSION = 6;
     private static final String KEY_LAST_INDEX = "last_channel_index";
     private static final String KEY_CHANNEL_IDS = "channel_ids_csv";
     private static final String KEY_NAME_PREFIX = "ch_name_";
