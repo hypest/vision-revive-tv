@@ -63,15 +63,15 @@ public class MainActivity extends Activity {
     private static final String DTV_INPUT_ID = "com.technicolor.android.dtvinput/.DtvInputService";
     private static final String PREFS_NAME = "ota_tv_prefs";
     private static final String KEY_PREFS_VERSION = "prefs_version";
-    private static final int CURRENT_PREFS_VERSION = 4;
+    private static final int CURRENT_PREFS_VERSION = 5;
     private static final String KEY_LAST_INDEX = "last_channel_index";
     private static final String KEY_CHANNEL_IDS = "channel_ids_csv";
     private static final String KEY_NAME_PREFIX = "ch_name_";
     private static final String KEY_DVB_PREFIX = "ch_dvb_";
 
-    // Default scanned channel IDs from the most recent scan (650..696, 47 channels)
-    private static final int DEFAULT_START_ID = 650;
-    private static final int DEFAULT_END_ID = 696;
+    // Default scanned channel IDs from the most recent scan (791..837, 47 channels)
+    private static final int DEFAULT_START_ID = 791;
+    private static final int DEFAULT_END_ID = 837;
 
     private static final Map<String, String> sDiscoveredTripletToName = new LinkedHashMap<String, String>();
 
@@ -400,7 +400,11 @@ public class MainActivity extends Activity {
                     }
                 }
 
-                mCurrentVideoStatus = "Video unavailable: " + formatUnavailableReason(reason);
+                if (reason == TvInputManager.VIDEO_UNAVAILABLE_REASON_AUDIO_ONLY) {
+                    mCurrentVideoStatus = "📻 Audio Broadcast (Radio)";
+                } else {
+                    mCurrentVideoStatus = "Video unavailable: " + formatUnavailableReason(reason);
+                }
                 updateOsdText();
             }
 
@@ -637,10 +641,11 @@ public class MainActivity extends Activity {
             SharedPreferences.Editor editor = prefs.edit();
             Map<String, ?> all = prefs.getAll();
             for (String key : all.keySet()) {
-                if (key.startsWith(KEY_NAME_PREFIX) || key.startsWith(KEY_DVB_PREFIX)) {
+                if (key.startsWith(KEY_NAME_PREFIX)) {
                     editor.remove(key);
                 }
             }
+            editor.remove(KEY_CHANNEL_IDS);
             editor.putInt(KEY_PREFS_VERSION, CURRENT_PREFS_VERSION);
             editor.apply();
         }
