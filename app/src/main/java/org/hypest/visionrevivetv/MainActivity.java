@@ -842,7 +842,7 @@ public class MainActivity extends Activity {
             public void run() {
                 try {
                     Process proc = Runtime.getRuntime().exec(new String[]{
-                        "logcat", "-d", "-t", "100", "-s", "DtvInputSession:D", "DTVFS:V", "TvPlayer:I", "DtvSetup:I", "dtv.EitHandler:V"
+                        "logcat", "-d", "-t", "400", "-s", "DtvInputSession:D", "DTVFS:V", "DtvSetup:I", "dtv.EitHandler:V"
                     });
                     BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
                     Pattern dvbPattern = Pattern.compile("DTVFS::Open:\\d+\\s+path=/live/dvb:([0-9a-zA-Z._-]+)/media\\.ts");
@@ -949,7 +949,7 @@ public class MainActivity extends Activity {
                                         updateOsdText();
                                         if (newEpgArrived) {
                                             boolean isOsdVisible = mOsdBanner != null && mOsdBanner.getVisibility() == View.VISIBLE;
-                                            boolean isRecentTune = (System.currentTimeMillis() - mLastTuneTimeMs) < 9000;
+                                            boolean isRecentTune = (System.currentTimeMillis() - mLastTuneTimeMs) < 15000;
                                             if (isOsdVisible || isRecentTune) {
                                                 if (mOsdBanner != null) {
                                                     mOsdBanner.setVisibility(View.VISIBLE);
