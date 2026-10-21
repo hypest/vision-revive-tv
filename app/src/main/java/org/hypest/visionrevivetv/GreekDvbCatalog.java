@@ -53,15 +53,15 @@ public final class GreekDvbCatalog {
         DEFAULT_ID_TO_DVB.put(826L, "dvb://212c.2.15");     // Kosmos 93.6
         DEFAULT_ID_TO_DVB.put(827L, "dvb://212c.2.14");     // ERT 2
         DEFAULT_ID_TO_DVB.put(828L, "dvb://212c.67.640");   // MEGA HD
-        DEFAULT_ID_TO_DVB.put(829L, "dvb://212c.1.7");      // Radio
+        DEFAULT_ID_TO_DVB.put(829L, "dvb://212c.1.7");      // ERT NEWS (SD)
         DEFAULT_ID_TO_DVB.put(830L, "dvb://212c.69.d48");   // OPEN BEYOND (SD)
         DEFAULT_ID_TO_DVB.put(831L, "dvb://212c.195.10a4"); // DION TV
-        DEFAULT_ID_TO_DVB.put(832L, "dvb://212c.1.6");      // ERT NEWS (SD) / Radio
-        DEFAULT_ID_TO_DVB.put(833L, "dvb://212c.1.5");      // Radio
-        DEFAULT_ID_TO_DVB.put(834L, "dvb://212c.1.4");      // Radio
-        DEFAULT_ID_TO_DVB.put(835L, "dvb://212c.1.3");      // Radio
-        DEFAULT_ID_TO_DVB.put(836L, "dvb://212c.1.2");      // Radio
-        DEFAULT_ID_TO_DVB.put(837L, "dvb://212c.1.1");      // Radio
+        DEFAULT_ID_TO_DVB.put(832L, "dvb://212c.1.6");      // ERT World
+        DEFAULT_ID_TO_DVB.put(833L, "dvb://212c.1.5");      // TV5 MONDE
+        DEFAULT_ID_TO_DVB.put(834L, "dvb://212c.1.4");      // RIK Sat
+        DEFAULT_ID_TO_DVB.put(835L, "dvb://212c.1.3");      // ERT 1 (SD)
+        DEFAULT_ID_TO_DVB.put(836L, "dvb://212c.1.2");      // ERT 3 (SD)
+        DEFAULT_ID_TO_DVB.put(837L, "dvb://212c.1.1");      // ERT 2 HD
         // --- ERT National & Public Multiplex (TSID 2 in Central Macedonia) ---
         CATALOG.put("dvb://212c.2.28", "ERT 1 HD");
         CATALOG.put("dvb://212c.2.14", "ERT 2");
@@ -114,14 +114,14 @@ public final class GreekDvbCatalog {
         CATALOG.put("dvb://212c.2.21", "ERT 95.8 FM (Radio)");
         CATALOG.put("dvb://212c.2.22", "Deftero 103.7 (Radio)");
 
-        // --- ERT Radio (TSID 1) ---
-        CATALOG.put("dvb://212c.1.1", "Proto 91.6 (Radio)");
-        CATALOG.put("dvb://212c.1.2", "Deftero 103.7 (Radio)");
-        CATALOG.put("dvb://212c.1.3", "Trito 90.9 (Radio)");
-        CATALOG.put("dvb://212c.1.4", "ERA Sport 101.8 (Radio)");
-        CATALOG.put("dvb://212c.1.5", "Kosmos 93.6 (Radio)");
-        CATALOG.put("dvb://212c.1.6", "Voice of Greece (Radio)");
-        CATALOG.put("dvb://212c.1.7", "ERT Cosmos (Radio)");
+        // --- ERT National & International Multiplex (TSID 1 in Central Macedonia) ---
+        CATALOG.put("dvb://212c.1.1", "ERT 2 HD");
+        CATALOG.put("dvb://212c.1.2", "ERT 3");
+        CATALOG.put("dvb://212c.1.3", "ERT 1");
+        CATALOG.put("dvb://212c.1.4", "RIK Sat");
+        CATALOG.put("dvb://212c.1.5", "TV5 MONDE");
+        CATALOG.put("dvb://212c.1.6", "ERT World");
+        CATALOG.put("dvb://212c.1.7", "ERT NEWS");
     }
 
     private GreekDvbCatalog() {}
@@ -168,25 +168,29 @@ public final class GreekDvbCatalog {
         String n = effectiveName.toUpperCase(Locale.US);
 
         // Radio channels go last
-        if (n.contains("(RADIO)") || (dvbTriplet != null && (dvbTriplet.startsWith("dvb://212c.1.") || dvbTriplet.matches("dvb://212c\\.2\\.(b|c|d|e|15|16|17|1f|20|21|22)")))) {
+        if (n.contains("(RADIO)") || (dvbTriplet != null && dvbTriplet.matches("dvb://212c\\.2\\.(b|c|d|e|15|16|17|1f|20|21|22)"))) {
             return 9000;
         }
 
         // --- National Greek Broadcasters (Standard LCN Lineup) ---
         // National HD: 10..120
-        // Regional TV: 500..800
-        // National SD Duplicates: 1000..1200
+        // Regional TV: 500..590
+        // International TV: 600..690
+        // National SD Duplicates & Relays: 1000..1200
         if (n.startsWith("ERT 1") || n.startsWith("ERT1")) {
             return n.contains("HD") ? 10 : 1010;
         }
         if (n.startsWith("ERT 2") || n.startsWith("ERT2")) {
-            return 20; // ERT 2 is standard LCN #2
+            return n.contains("HD") ? 20 : 25; // ERT 2 HD is 20, SD is 25
         }
         if (n.startsWith("ERT 3") || n.startsWith("ERT3")) {
             return n.contains("HD") ? 30 : 1030;
         }
         if (n.contains("ERT NEWS") || n.contains("ERTNEWS")) {
-            return 35;
+            return n.contains("HD") ? 35 : 1035;
+        }
+        if (n.contains("WORLD") || n.contains("COSMOS")) {
+            return 1038;
         }
         if (n.startsWith("VOULI")) {
             return 38;
@@ -223,6 +227,10 @@ public final class GreekDvbCatalog {
         if (n.contains("SMILE")) return 570;
         if (n.contains("EUROPE ONE") || n.contains("EUROPE 1")) return 580;
         if (n.contains("PONTOS")) return 590;
+
+        // International TV Channels (ERT Mux 2)
+        if (n.startsWith("RIK") || n.contains("PIK")) return 600;
+        if (n.contains("TV5") || n.contains("MONDE")) return 610;
 
         return 800;
     }
