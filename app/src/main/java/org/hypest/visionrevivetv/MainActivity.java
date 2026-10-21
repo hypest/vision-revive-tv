@@ -130,6 +130,7 @@ public class MainActivity extends Activity {
 
     private final StringBuilder mDigitBuffer = new StringBuilder();
     private long mLastBackPressMs = 0;
+    private long mLastTuneTimeMs = 0;
 
     // Auto-probe state for discovering active channel IDs in TvProvider via DtvInputService
     private static final int PROBE_STAGE_IDLE = 0;
@@ -349,7 +350,14 @@ public class MainActivity extends Activity {
                 }
                 mCurrentVideoStatus = "Live DVB-T/T2 Signal Locked";
                 updateOsdText();
-                scheduleOsdHide(4500);
+                long osdTimeout = 5000;
+                if (mCurrentIndex >= 0 && mCurrentIndex < mChannels.size()) {
+                    ChannelEntry ch = mChannels.get(mCurrentIndex);
+                    if (ch.currentProgramTitle != null && !ch.currentProgramTitle.isEmpty()) {
+                        osdTimeout = 7500;
+                    }
+                }
+                scheduleOsdHide(osdTimeout);
             }
 
             @Override
@@ -722,6 +730,7 @@ public class MainActivity extends Activity {
         if (index >= mChannels.size()) index = 0;
 
         mCurrentIndex = index;
+        mLastTuneTimeMs = System.currentTimeMillis();
         ChannelEntry ch = mChannels.get(mCurrentIndex);
 
         getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -859,15 +868,27 @@ public class MainActivity extends Activity {
                                             .apply();
                                     changed = true;
                                 }
+                                boolean newEpgArrived = false;
                                 if (finalProgramTitle != null && !finalProgramTitle.equals(currentCh.currentProgramTitle)) {
                                     currentCh.currentProgramTitle = finalProgramTitle;
                                     currentCh.currentProgramGenre = finalProgramGenre;
                                     changed = true;
+                                    newEpgArrived = true;
                                 }
                                 if (changed) {
                                     refreshChannelLabels();
                                     if (mCurrentIndex >= 0 && mCurrentIndex < mChannels.size() && mChannels.get(mCurrentIndex).id == currentCh.id) {
                                         updateOsdText();
+                                        if (newEpgArrived) {
+                                            boolean isOsdVisible = mOsdBanner != null && mOsdBanner.getVisibility() == View.VISIBLE;
+                                            boolean isRecentTune = (System.currentTimeMillis() - mLastTuneTimeMs) < 9000;
+                                            if (isOsdVisible || isRecentTune) {
+                                                if (mOsdBanner != null) {
+                                                    mOsdBanner.setVisibility(View.VISIBLE);
+                                                }
+                                                scheduleOsdHide(7500);
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -884,7 +905,14 @@ public class MainActivity extends Activity {
         if (mOsdBanner != null) {
             mOsdBanner.setVisibility(View.VISIBLE);
         }
-        scheduleOsdHide(5500);
+        long osdTimeout = 5500;
+        if (mCurrentIndex >= 0 && mCurrentIndex < mChannels.size()) {
+            ChannelEntry ch = mChannels.get(mCurrentIndex);
+            if (ch.currentProgramTitle != null && !ch.currentProgramTitle.isEmpty()) {
+                osdTimeout = 7500;
+            }
+        }
+        scheduleOsdHide(osdTimeout);
     }
 
     private void scheduleOsdHide(long delayMs) {
