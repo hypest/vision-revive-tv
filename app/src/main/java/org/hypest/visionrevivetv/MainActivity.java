@@ -845,68 +845,25 @@ public class MainActivity extends Activity {
                         "logcat", "-d", "-t", "400", "-s", "DtvInputSession:D", "DTVFS:V", "DtvSetup:I", "dtv.EitHandler:V"
                     });
                     BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-                    Pattern dvbPattern = Pattern.compile("DTVFS::Open:\\d+\\s+path=/live/dvb:([0-9a-zA-Z._-]+)/media\\.ts");
-                    Pattern zapPattern = Pattern.compile("zap on dvb://([0-9a-zA-Z._-]+)");
-                    Pattern dumpPattern = Pattern.compile("(dvb://[0-9a-zA-Z._-]+)\\s*:\\s*(.+?)\\s+lcn=(\\d+)");
-                    Pattern chPattern = Pattern.compile("Service\\s+(dvb://[0-9a-zA-Z._-]+)\\s+created\\s+->content://android\\.media\\.tv/channel/" + currentCh.id);
-
-                    String foundDvb = null;
-                    String foundName = null;
-                    String foundProgramTitle = null;
-                    String foundProgramGenre = null;
-                    final Map<String, String> localTripletToName = new LinkedHashMap<String, String>();
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        Matcher mc = chPattern.matcher(line);
-                        if (mc.find()) {
-                            foundDvb = mc.group(1);
-                        }
-                        Matcher md = dvbPattern.matcher(line);
-                        if (md.find()) {
-                            foundDvb = "dvb://" + md.group(1);
-                        }
-                        Matcher mz = zapPattern.matcher(line);
-                        if (mz.find()) {
-                            foundDvb = "dvb://" + mz.group(1);
-                        }
-                        Matcher mDump = dumpPattern.matcher(line);
-                        if (mDump.find()) {
-                            String d = mDump.group(1);
-                            String n = mDump.group(2).trim();
-                            localTripletToName.put(d, n);
-                            sDiscoveredTripletToName.put(d, n);
-                        }
-                        if (line.contains("dtv.EitHandler:") && line.contains("Desc:{")) {
-                            try {
-                                int idx = line.indexOf("Desc:{");
-                                String jsonStr = line.substring(idx + 5).trim();
-                                JSONObject json = new JSONObject(jsonStr);
-                                JSONObject shortDesc = json.optJSONObject("short_event_desc");
-                                if (shortDesc != null) {
-                                    String evName = shortDesc.optString("event_name", null);
-                                    String genre = shortDesc.optString("text", null);
-                                    if (evName != null && !evName.trim().isEmpty()) {
-                                        foundProgramTitle = evName.trim();
-                                    }
-                                    if (genre != null && !genre.trim().isEmpty()) {
-                                        foundProgramGenre = genre.trim();
-                                    }
-                                }
-                            } catch (Exception ignored) {}
-                        }
-                    }
+                    EitLogParser.Result parsed = EitLogParser.parse(reader, currentCh.id);
                     reader.close();
 
-                    if (foundDvb != null && foundName == null) {
+                    sDiscoveredTripletToName.putAll(parsed.discoveredTriplets);
+
+                    String foundDvb = parsed.dvbTriplet;
+                    String foundName = null;
+                    if (foundDvb != null) {
                         String catName = GreekDvbCatalog.lookupChannelName(foundDvb);
                         if (catName != null) {
                             foundName = catName;
-                        } else if (localTripletToName.containsKey(foundDvb)) {
-                            foundName = localTripletToName.get(foundDvb);
+                        } else if (parsed.discoveredTriplets.containsKey(foundDvb)) {
+                            foundName = parsed.discoveredTriplets.get(foundDvb);
                         } else if (sDiscoveredTripletToName.containsKey(foundDvb)) {
                             foundName = sDiscoveredTripletToName.get(foundDvb);
                         }
                     }
+                    String foundProgramTitle = parsed.programTitle;
+                    String foundProgramGenre = parsed.programGenre;
 
                     android.util.Log.i("OtaTvChannels", "Tuned ch " + currentCh.id + " -> dvb=" + foundDvb + " name=" + foundName + " prog=" + foundProgramTitle);
 

@@ -27,5 +27,5 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build Debug & Release APKs
-        run: ./gradlew assembleDebug assembleRelease
+      - name: Run Unit Tests & Build APKs
+        run: ./gradlew test assembleDebug assembleRelease
