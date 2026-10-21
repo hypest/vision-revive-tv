@@ -43,6 +43,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -87,7 +88,7 @@ public class MainActivity extends Activity {
 
     public static class ChannelEntry {
         public final long id;
-        public final int displayNumber;
+        public int displayNumber;
         public String name;
         public String dvbTriplet;
         public String currentProgramTitle;
@@ -674,7 +675,6 @@ public class MainActivity extends Activity {
     private void rebuildChannelEntries(List<Long> ids) {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         mChannels.clear();
-        int num = 1;
         for (int i = 0; i < ids.size(); i++) {
             Long id = ids.get(i);
             String savedDvb = prefs.getString(KEY_DVB_PREFIX + id, null);
@@ -683,15 +683,55 @@ public class MainActivity extends Activity {
             String finalName;
             if (savedName != null && !savedName.trim().isEmpty() && !isDefaultName(savedName)) {
                 finalName = savedName.trim();
+            } else if (savedDvb != null && GreekDvbCatalog.lookupChannelName(savedDvb) != null) {
+                finalName = GreekDvbCatalog.lookupChannelName(savedDvb);
             } else if (savedDvb != null && sDiscoveredTripletToName.containsKey(savedDvb)) {
                 finalName = sDiscoveredTripletToName.get(savedDvb);
             } else {
-                finalName = String.format(Locale.US, "CH %02d", num);
+                finalName = "";
             }
 
-            mChannels.add(new ChannelEntry(id, num, finalName, savedDvb != null ? savedDvb : ""));
+            mChannels.add(new ChannelEntry(id, i + 1, finalName, savedDvb != null ? savedDvb : ""));
+        }
+        sortAndRefreshChannels(false);
+    }
+
+    private void sortAndRefreshChannels(boolean preserveCurrentSelection) {
+        long currentId = (preserveCurrentSelection && mCurrentIndex >= 0 && mCurrentIndex < mChannels.size())
+                ? mChannels.get(mCurrentIndex).id : -1;
+
+        Collections.sort(mChannels, new Comparator<ChannelEntry>() {
+            @Override
+            public int compare(ChannelEntry a, ChannelEntry b) {
+                int rankA = GreekDvbCatalog.getChannelRank(a.dvbTriplet, a.name);
+                int rankB = GreekDvbCatalog.getChannelRank(b.dvbTriplet, b.name);
+                if (rankA != rankB) {
+                    return Integer.compare(rankA, rankB);
+                }
+                return Long.compare(a.id, b.id);
+            }
+        });
+
+        List<Long> sortedIds = new ArrayList<Long>();
+        int num = 1;
+        for (int i = 0; i < mChannels.size(); i++) {
+            ChannelEntry ch = mChannels.get(i);
+            ch.displayNumber = num;
+            if (ch.name == null || ch.name.isEmpty() || isDefaultName(ch.name)) {
+                String catName = GreekDvbCatalog.lookupChannelName(ch.dvbTriplet);
+                if (catName != null) {
+                    ch.name = catName;
+                } else {
+                    ch.name = String.format(Locale.US, "CH %02d", num);
+                }
+            }
+            sortedIds.add(ch.id);
+            if (ch.id == currentId) {
+                mCurrentIndex = i;
+            }
             num++;
         }
+        saveChannelIdsToPrefs(sortedIds);
         refreshChannelLabels();
     }
 
@@ -833,7 +873,10 @@ public class MainActivity extends Activity {
                     reader.close();
 
                     if (foundDvb != null && foundName == null) {
-                        if (localTripletToName.containsKey(foundDvb)) {
+                        String catName = GreekDvbCatalog.lookupChannelName(foundDvb);
+                        if (catName != null) {
+                            foundName = catName;
+                        } else if (localTripletToName.containsKey(foundDvb)) {
                             foundName = localTripletToName.get(foundDvb);
                         } else if (sDiscoveredTripletToName.containsKey(foundDvb)) {
                             foundName = sDiscoveredTripletToName.get(foundDvb);
@@ -852,6 +895,7 @@ public class MainActivity extends Activity {
                             @Override
                             public void run() {
                                 boolean changed = false;
+                                boolean orderOrIdentityChanged = false;
                                 if (finalDvb != null && (currentCh.dvbTriplet == null || currentCh.dvbTriplet.isEmpty())) {
                                     currentCh.dvbTriplet = finalDvb;
                                     getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -859,6 +903,7 @@ public class MainActivity extends Activity {
                                             .putString(KEY_DVB_PREFIX + currentCh.id, finalDvb)
                                             .apply();
                                     changed = true;
+                                    orderOrIdentityChanged = true;
                                 }
                                 if (finalName != null && !finalName.isEmpty() && isDefaultName(currentCh.name)) {
                                     currentCh.name = finalName;
@@ -867,6 +912,7 @@ public class MainActivity extends Activity {
                                             .putString(KEY_NAME_PREFIX + currentCh.id, finalName)
                                             .apply();
                                     changed = true;
+                                    orderOrIdentityChanged = true;
                                 }
                                 boolean newEpgArrived = false;
                                 if (finalProgramTitle != null && !finalProgramTitle.equals(currentCh.currentProgramTitle)) {
@@ -875,8 +921,12 @@ public class MainActivity extends Activity {
                                     changed = true;
                                     newEpgArrived = true;
                                 }
-                                if (changed) {
+                                if (orderOrIdentityChanged) {
+                                    sortAndRefreshChannels(true);
+                                } else if (changed) {
                                     refreshChannelLabels();
+                                }
+                                if (changed) {
                                     if (mCurrentIndex >= 0 && mCurrentIndex < mChannels.size() && mChannels.get(mCurrentIndex).id == currentCh.id) {
                                         updateOsdText();
                                         if (newEpgArrived) {
@@ -1083,7 +1133,7 @@ public class MainActivity extends Activity {
                 .edit()
                 .putString(KEY_NAME_PREFIX + ch.id, newName)
                 .apply();
-        refreshChannelLabels();
+        sortAndRefreshChannels(true);
         updateOsdText();
     }
 
