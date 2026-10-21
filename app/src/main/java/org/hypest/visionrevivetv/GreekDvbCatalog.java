@@ -11,8 +11,57 @@ import java.util.Map;
 public final class GreekDvbCatalog {
 
     private static final Map<String, String> CATALOG = new HashMap<String, String>();
+    private static final Map<Long, String> DEFAULT_ID_TO_DVB = new HashMap<Long, String>();
 
     static {
+        // Default scanned ID -> DVB Triplet mapping for Wind Vision box
+        DEFAULT_ID_TO_DVB.put(791L, "dvb://212c.197.111c"); // 4E
+        DEFAULT_ID_TO_DVB.put(792L, "dvb://212c.195.1090"); // ΒΕΡΓΙΝΑ
+        DEFAULT_ID_TO_DVB.put(793L, "dvb://212c.69.ce4");   // ANT1 (SD)
+        DEFAULT_ID_TO_DVB.put(794L, "dvb://212c.65.44c");   // ALPHA HD
+        DEFAULT_ID_TO_DVB.put(795L, "dvb://212c.67.6a4");   // ANT1 HD
+        DEFAULT_ID_TO_DVB.put(796L, "dvb://212c.195.10c2"); // GNOMI TV
+        DEFAULT_ID_TO_DVB.put(797L, "dvb://212c.2.e");      // Trito 90.9
+        DEFAULT_ID_TO_DVB.put(798L, "dvb://212c.2.d");      // Proto 91.6
+        DEFAULT_ID_TO_DVB.put(799L, "dvb://212c.2.c");      // Deftero 103.7
+        DEFAULT_ID_TO_DVB.put(800L, "dvb://212c.2.1f");     // ERA Sport
+        DEFAULT_ID_TO_DVB.put(801L, "dvb://212c.2.1f");     // ERA Sport
+        DEFAULT_ID_TO_DVB.put(802L, "dvb://212c.2.a");      // ERT 1 (SD)
+        DEFAULT_ID_TO_DVB.put(803L, "dvb://212c.195.10ae"); // EURO TV
+        DEFAULT_ID_TO_DVB.put(804L, "dvb://212c.65.514");   // ANT1 HD
+        DEFAULT_ID_TO_DVB.put(805L, "dvb://212c.65.578");   // OPEN BEYOND HD
+        DEFAULT_ID_TO_DVB.put(806L, "dvb://212c.2.29");     // ERT NEWS HD
+        DEFAULT_ID_TO_DVB.put(807L, "dvb://212c.2.28");     // ERT 1 HD
+        DEFAULT_ID_TO_DVB.put(808L, "dvb://212c.197.1112"); // SMILE TV
+        DEFAULT_ID_TO_DVB.put(809L, "");                    // PONTOS TV
+        DEFAULT_ID_TO_DVB.put(810L, "dvb://212c.69.c1c");   // ALPHA (SD)
+        DEFAULT_ID_TO_DVB.put(811L, "dvb://212c.2.23");     // ERT 3 HD
+        DEFAULT_ID_TO_DVB.put(812L, "dvb://212c.2.22");     // Deftero 103.7
+        DEFAULT_ID_TO_DVB.put(813L, "dvb://212c.2.21");     // TV 100
+        DEFAULT_ID_TO_DVB.put(814L, "dvb://212c.2.20");     // EURO TV
+        DEFAULT_ID_TO_DVB.put(815L, "dvb://212c.65.4b0");   // SKAI HD
+        DEFAULT_ID_TO_DVB.put(816L, "dvb://212c.69.dac");   // STAR (SD)
+        DEFAULT_ID_TO_DVB.put(817L, "dvb://212c.2.9");      // VOULI TV
+        DEFAULT_ID_TO_DVB.put(818L, "dvb://212c.197.1108"); // EUROPE ONE
+        DEFAULT_ID_TO_DVB.put(819L, "dvb://212c.67.5dc");   // STAR HD
+        DEFAULT_ID_TO_DVB.put(820L, "dvb://212c.197.10cc"); // TV 100
+        DEFAULT_ID_TO_DVB.put(821L, "dvb://212c.69.c80");   // SKAI (SD)
+        DEFAULT_ID_TO_DVB.put(822L, "dvb://212c.2.17");     // Voice of Greece
+        DEFAULT_ID_TO_DVB.put(823L, "dvb://212c.2.16");     // ERA Sport
+        DEFAULT_ID_TO_DVB.put(824L, "dvb://212c.69.e74");   // MAK TV
+        DEFAULT_ID_TO_DVB.put(825L, "dvb://212c.69.e10");   // MEGA (SD)
+        DEFAULT_ID_TO_DVB.put(826L, "dvb://212c.2.15");     // Kosmos 93.6
+        DEFAULT_ID_TO_DVB.put(827L, "dvb://212c.2.14");     // ERT 2
+        DEFAULT_ID_TO_DVB.put(828L, "dvb://212c.67.640");   // MEGA HD
+        DEFAULT_ID_TO_DVB.put(829L, "dvb://212c.1.7");      // Radio
+        DEFAULT_ID_TO_DVB.put(830L, "dvb://212c.69.d48");   // OPEN BEYOND (SD)
+        DEFAULT_ID_TO_DVB.put(831L, "dvb://212c.195.10a4"); // DION TV
+        DEFAULT_ID_TO_DVB.put(832L, "dvb://212c.1.6");      // ERT NEWS (SD) / Radio
+        DEFAULT_ID_TO_DVB.put(833L, "dvb://212c.1.5");      // Radio
+        DEFAULT_ID_TO_DVB.put(834L, "dvb://212c.1.4");      // Radio
+        DEFAULT_ID_TO_DVB.put(835L, "dvb://212c.1.3");      // Radio
+        DEFAULT_ID_TO_DVB.put(836L, "dvb://212c.1.2");      // Radio
+        DEFAULT_ID_TO_DVB.put(837L, "dvb://212c.1.1");      // Radio
         // --- ERT National & Public Multiplex (TSID 2 in Central Macedonia) ---
         CATALOG.put("dvb://212c.2.28", "ERT 1 HD");
         CATALOG.put("dvb://212c.2.14", "ERT 2");
@@ -90,6 +139,14 @@ public final class GreekDvbCatalog {
             key = "dvb://" + key;
         }
         return CATALOG.get(key);
+    }
+
+    /**
+     * Returns the empirically calibrated default DVB triplet for a given channel ID
+     * from the standard Wind Vision DTV scan, if known.
+     */
+    public static String getDefaultDvbForChannel(long channelId) {
+        return DEFAULT_ID_TO_DVB.get(channelId);
     }
 
     /**

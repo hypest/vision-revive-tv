@@ -697,6 +697,9 @@ public class MainActivity extends Activity {
         for (int i = 0; i < ids.size(); i++) {
             Long id = ids.get(i);
             String savedDvb = prefs.getString(KEY_DVB_PREFIX + id, null);
+            if (savedDvb == null || savedDvb.isEmpty()) {
+                savedDvb = GreekDvbCatalog.getDefaultDvbForChannel(id);
+            }
             String savedName = prefs.getString(KEY_NAME_PREFIX + id, null);
 
             String finalName;
@@ -706,6 +709,8 @@ public class MainActivity extends Activity {
                 finalName = GreekDvbCatalog.lookupChannelName(savedDvb);
             } else if (savedDvb != null && sDiscoveredTripletToName.containsKey(savedDvb)) {
                 finalName = sDiscoveredTripletToName.get(savedDvb);
+            } else if (id == 809L) {
+                finalName = "PONTOS TV";
             } else {
                 finalName = "";
             }
