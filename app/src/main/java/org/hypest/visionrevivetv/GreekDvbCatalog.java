@@ -37,8 +37,8 @@ public final class GreekDvbCatalog {
         DEFAULT_ID_TO_DVB.put(810L, "dvb://212c.69.c1c");   // ALPHA (SD)
         DEFAULT_ID_TO_DVB.put(811L, "dvb://212c.2.23");     // ERT 3 HD
         DEFAULT_ID_TO_DVB.put(812L, "dvb://212c.2.22");     // Deftero 103.7
-        DEFAULT_ID_TO_DVB.put(813L, "dvb://212c.2.21");     // TV 100
-        DEFAULT_ID_TO_DVB.put(814L, "dvb://212c.2.20");     // EURO TV
+        DEFAULT_ID_TO_DVB.put(813L, "dvb://212c.2.21");     // ERT 95.8 FM (Radio)
+        DEFAULT_ID_TO_DVB.put(814L, "dvb://212c.2.20");     // ERT 102 FM (Radio)
         DEFAULT_ID_TO_DVB.put(815L, "dvb://212c.65.4b0");   // SKAI HD
         DEFAULT_ID_TO_DVB.put(816L, "dvb://212c.69.dac");   // STAR (SD)
         DEFAULT_ID_TO_DVB.put(817L, "dvb://212c.2.9");      // VOULI TV
@@ -101,10 +101,6 @@ public final class GreekDvbCatalog {
         CATALOG.put("dvb://212c.197.1112", "SMILE TV");
         CATALOG.put("dvb://212c.197.111c", "4E");
 
-        // --- Regional Channels (Alternate / Legacy triplets) ---
-        CATALOG.put("dvb://212c.2.21", "TV 100");
-        CATALOG.put("dvb://212c.2.20", "EURO TV");
-
         // --- ERA / ERT Radio Stations (TSID 2 audio-only) ---
         CATALOG.put("dvb://212c.2.b", "Proto 91.6 (Radio)");
         CATALOG.put("dvb://212c.2.c", "Deftero 103.7 (Radio)");
@@ -114,6 +110,8 @@ public final class GreekDvbCatalog {
         CATALOG.put("dvb://212c.2.16", "ERA Sport 101.8 (Radio)");
         CATALOG.put("dvb://212c.2.17", "Voice of Greece (Radio)");
         CATALOG.put("dvb://212c.2.1f", "ERA Sport 101.8 (Radio)");
+        CATALOG.put("dvb://212c.2.20", "ERT 102 FM (Radio)");
+        CATALOG.put("dvb://212c.2.21", "ERT 95.8 FM (Radio)");
         CATALOG.put("dvb://212c.2.22", "Deftero 103.7 (Radio)");
 
         // --- ERT Radio (TSID 1) ---
@@ -170,7 +168,7 @@ public final class GreekDvbCatalog {
         String n = effectiveName.toUpperCase(Locale.US);
 
         // Radio channels go last
-        if (n.contains("(RADIO)") || (dvbTriplet != null && (dvbTriplet.startsWith("dvb://212c.1.") || dvbTriplet.matches("dvb://212c\\.2\\.(b|c|d|e|15|16|17|1f|20|22)")))) {
+        if (n.contains("(RADIO)") || (dvbTriplet != null && (dvbTriplet.startsWith("dvb://212c.1.") || dvbTriplet.matches("dvb://212c\\.2\\.(b|c|d|e|15|16|17|1f|20|21|22)")))) {
             return 9000;
         }
 
