@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -51,148 +52,35 @@ public class MainActivity extends Activity {
 
     private static final String DTV_INPUT_ID = "com.technicolor.android.dtvinput/.DtvInputService";
     private static final String PREFS_NAME = "ota_tv_prefs";
+    private static final String KEY_PREFS_VERSION = "prefs_version";
+    private static final int CURRENT_PREFS_VERSION = 2;
     private static final String KEY_LAST_INDEX = "last_channel_index";
     private static final String KEY_CHANNEL_IDS = "channel_ids_csv";
     private static final String KEY_NAME_PREFIX = "ch_name_";
     private static final String KEY_DVB_PREFIX = "ch_dvb_";
 
-    // Default scanned channel IDs from the most recent scan (603..649, 47 channels)
+    // Default scanned channel IDs from the most recent scan (650..696, 47 channels)
     private static final int DEFAULT_START_ID = 650;
     private static final int DEFAULT_END_ID = 696;
+
+    private static final Map<String, String> sDiscoveredTripletToName = new LinkedHashMap<String, String>();
 
     private static final String[] GREEK_CHANNEL_PRESETS = new String[]{
         "ERT 1 HD", "ERT 2 HD", "ERT 3 HD", "ERT NEWS HD", "VOULI TV",
         "MEGA HD", "ANT1 HD", "ALPHA HD", "STAR HD", "SKAI HD", "OPEN BEYOND HD", "MAK TV HD",
         "ERT 1", "ERT 2", "ERT 3", "ERT NEWS",
         "MEGA", "ANT1", "ALPHA", "STAR", "SKAI", "OPEN BEYOND", "MAK TV",
+        "4E", "ΒΕΡΓΙΝΑ", "DION TV", "EURO TV", "TV 100",
         "ACTION 24", "ATTICA TV", "ONE CHANNEL", "BLUE SKY", "ALERT TV",
         "KONTRA", "HIGH TV", "MAD TV", "SMILE TV", "NICKELODEON", "RISE TV",
         "EURONEWS", "RIK SAT", "TV5 MONDE", "BBC WORLD"
     };
 
-    /**
-     * Complete sequential DVB service triplets produced by antenna scan in Attica/Greece
-     * on the Technicolor DSI724HN DtvInputService tuner.
-     */
-    public static final String[] STANDARD_GREEK_TRIPLETS_IN_ORDER = new String[]{
-        "dvb://212c.197.111c", // 01: ERT 1
-        "dvb://212c.195.1090", // 02: ERT 1 HD
-        "dvb://212c.69.ce4",  // 03: ONE CHANNEL
-        "dvb://212c.65.44c",  // 04: ALPHA HD
-        "dvb://212c.67.6a4",  // 05: MAK TV HD
-        "dvb://212c.195.10c2", // 06: ERT 3 HD
-        "dvb://212c.2.e",     // 07: ALPHA
-        "dvb://212c.2.d",     // 08: ANT1
-        "dvb://212c.2.c",     // 09: MEGA
-        "dvb://212c.2.1f",    // 10: EXTRA CHANNEL
-        "dvb://212c.2.b",     // 11: ART TV
-        "dvb://212c.2.a",     // 12: HIGH TV
-        "dvb://212c.195.10ae", // 13: ERT 2 HD
-        "dvb://212c.65.514",  // 14: OPEN BEYOND HD
-        "dvb://212c.65.578",  // 15: STAR HD
-        "dvb://212c.2.29",    // 16: TV 1
-        "dvb://212c.2.28",    // 17: MILOS TV
-        "dvb://212c.197.1112", // 18: ERT News
-        "dvb://212c.195.10b8", // 19: ERT 2
-        "dvb://212c.69.c1c",  // 20: ACTION 24
-        "dvb://212c.2.23",    // 21: ALERT
-        "dvb://212c.2.22",    // 22: NEW EPSILON
-        "dvb://212c.2.21",    // 23: RISE TV
-        "dvb://212c.2.20",    // 24: NICKELODEON PLUS
-        "dvb://212c.65.4b0",  // 25: ANT1 HD
-        "dvb://212c.69.dac",  // 26: BLUE SKY
-        "dvb://212c.2.9",     // 27: MAD TV
-        "dvb://212c.197.1108", // 28: VOULI TV
-        "dvb://212c.67.5dc",  // 29: SKAI HD
-        "dvb://212c.197.10cc", // 30: ERT 3
-        "dvb://212c.69.c80",  // 31: ATTICA TV
-        "dvb://212c.2.17",    // 32: MAK TV
-        "dvb://212c.2.16",    // 33: OPEN BEYOND
-        "dvb://212c.69.e74",  // 34: SMILE TV
-        "dvb://212c.69.e10",  // 35: ALERT TV
-        "dvb://212c.2.15",    // 36: SKAI
-        "dvb://212c.2.14",    // 37: STAR
-        "dvb://212c.67.640",  // 38: MEGA HD
-        "dvb://212c.1.7",     // 39: ERT Cosmos (Radio)
-        "dvb://212c.69.d48",  // 40: KONTRA CHANNEL
-        "dvb://212c.195.10a4", // 41: ERT News HD
-        "dvb://212c.1.6",     // 42: Voice of Greece (Radio)
-        "dvb://212c.1.5",     // 43: Kosmos 93.6 (Radio)
-        "dvb://212c.1.4",     // 44: ERA Sport 101.8 (Radio)
-        "dvb://212c.1.3",     // 45: Trito 90.9 (Radio)
-        "dvb://212c.1.2",     // 46: Deftero 103.7 (Radio)
-        "dvb://212c.1.1"      // 47: Proto 91.6 (Radio)
-    };
-
-    public static final Map<String, String> GREEK_DVB_CATALOG = new LinkedHashMap<String, String>();
-    static {
-        // ERT National HD & Mux
-        GREEK_DVB_CATALOG.put("dvb://212c.195.1090", "ERT 1 HD");
-        GREEK_DVB_CATALOG.put("dvb://212c.195.10ae", "ERT 2 HD");
-        GREEK_DVB_CATALOG.put("dvb://212c.195.10c2", "ERT 3 HD");
-        GREEK_DVB_CATALOG.put("dvb://212c.195.10a4", "ERT News HD");
-        GREEK_DVB_CATALOG.put("dvb://212c.195.10b8", "ERT 2");
-        GREEK_DVB_CATALOG.put("dvb://212c.197.10cc", "ERT 3");
-        GREEK_DVB_CATALOG.put("dvb://212c.197.1108", "VOULI TV");
-        GREEK_DVB_CATALOG.put("dvb://212c.197.1112", "ERT News");
-        GREEK_DVB_CATALOG.put("dvb://212c.197.111c", "ERT 1");
-
-        // Digea National HD Mux 1 & 2
-        GREEK_DVB_CATALOG.put("dvb://212c.65.44c", "ALPHA HD");
-        GREEK_DVB_CATALOG.put("dvb://212c.65.4b0", "ANT1 HD");
-        GREEK_DVB_CATALOG.put("dvb://212c.65.514", "OPEN BEYOND HD");
-        GREEK_DVB_CATALOG.put("dvb://212c.65.578", "STAR HD");
-        GREEK_DVB_CATALOG.put("dvb://212c.67.5dc", "SKAI HD");
-        GREEK_DVB_CATALOG.put("dvb://212c.67.640", "MEGA HD");
-        GREEK_DVB_CATALOG.put("dvb://212c.67.6a4", "MAK TV HD");
-
-        // Digea National SD Mux
-        GREEK_DVB_CATALOG.put("dvb://212c.2.c", "MEGA");
-        GREEK_DVB_CATALOG.put("dvb://212c.2.d", "ANT1");
-        GREEK_DVB_CATALOG.put("dvb://212c.2.e", "ALPHA");
-        GREEK_DVB_CATALOG.put("dvb://212c.2.14", "STAR");
-        GREEK_DVB_CATALOG.put("dvb://212c.2.15", "SKAI");
-        GREEK_DVB_CATALOG.put("dvb://212c.2.16", "OPEN BEYOND");
-        GREEK_DVB_CATALOG.put("dvb://212c.2.17", "MAK TV");
-
-        // Attica Regional Mux 1 (650 MHz / CH 43)
-        GREEK_DVB_CATALOG.put("dvb://212c.69.c1c", "ACTION 24");
-        GREEK_DVB_CATALOG.put("dvb://212c.69.c80", "ATTICA TV");
-        GREEK_DVB_CATALOG.put("dvb://212c.69.ce4", "ONE CHANNEL");
-        GREEK_DVB_CATALOG.put("dvb://212c.69.d48", "KONTRA CHANNEL");
-        GREEK_DVB_CATALOG.put("dvb://212c.69.dac", "BLUE SKY");
-        GREEK_DVB_CATALOG.put("dvb://212c.69.e10", "ALERT TV");
-        GREEK_DVB_CATALOG.put("dvb://212c.69.e74", "SMILE TV");
-
-        // Attica Regional Mux 2
-        GREEK_DVB_CATALOG.put("dvb://212c.2.9", "MAD TV");
-        GREEK_DVB_CATALOG.put("dvb://212c.2.a", "HIGH TV");
-        GREEK_DVB_CATALOG.put("dvb://212c.2.b", "ART TV");
-        GREEK_DVB_CATALOG.put("dvb://212c.2.1f", "EXTRA CHANNEL");
-        GREEK_DVB_CATALOG.put("dvb://212c.2.20", "NICKELODEON PLUS");
-        GREEK_DVB_CATALOG.put("dvb://212c.2.21", "RISE TV");
-        GREEK_DVB_CATALOG.put("dvb://212c.2.22", "NEW EPSILON");
-        GREEK_DVB_CATALOG.put("dvb://212c.2.23", "ALERT");
-        GREEK_DVB_CATALOG.put("dvb://212c.2.28", "MILOS TV");
-        GREEK_DVB_CATALOG.put("dvb://212c.2.29", "TV 1");
-
-        // ERT Radio
-        GREEK_DVB_CATALOG.put("dvb://212c.1.1", "Proto 91.6 (Radio)");
-        GREEK_DVB_CATALOG.put("dvb://212c.1.2", "Deftero 103.7 (Radio)");
-        GREEK_DVB_CATALOG.put("dvb://212c.1.3", "Trito 90.9 (Radio)");
-        GREEK_DVB_CATALOG.put("dvb://212c.1.4", "ERA Sport 101.8 (Radio)");
-        GREEK_DVB_CATALOG.put("dvb://212c.1.5", "Kosmos 93.6 (Radio)");
-        GREEK_DVB_CATALOG.put("dvb://212c.1.6", "Voice of Greece (Radio)");
-        GREEK_DVB_CATALOG.put("dvb://212c.1.7", "ERT Cosmos (Radio)");
-    }
-
-    public static String lookupChannelName(String dvb) {
-        if (dvb == null || dvb.isEmpty()) return null;
-        String key = dvb.trim().toLowerCase();
-        if (!key.startsWith("dvb://")) {
-            key = "dvb://" + key;
-        }
-        return GREEK_DVB_CATALOG.get(key);
+    public static boolean isDefaultName(String name) {
+        if (name == null) return true;
+        String trimmed = name.trim();
+        if (trimmed.isEmpty()) return true;
+        return trimmed.matches("(?i)^(?:CH|OTA Channel)\\s*\\d+$");
     }
 
     public static class ChannelEntry {
@@ -397,6 +285,9 @@ public class MainActivity extends Activity {
         super.onResume();
         if (mWaitingForScannerReturn) {
             mWaitingForScannerReturn = false;
+            // 1. Opportunistically discover channels and names directly from logcat right away before buffers scroll
+            discoverChannelsFromLogcatAsync(false);
+            // 2. Also run auto-probe to find the active ID boundary in TvProvider
             mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
@@ -690,6 +581,18 @@ public class MainActivity extends Activity {
 
     private void loadChannelsFromPrefs() {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        if (prefs.getInt(KEY_PREFS_VERSION, 1) < CURRENT_PREFS_VERSION) {
+            SharedPreferences.Editor editor = prefs.edit();
+            Map<String, ?> all = prefs.getAll();
+            for (String key : all.keySet()) {
+                if (key.startsWith(KEY_NAME_PREFIX) || key.startsWith(KEY_DVB_PREFIX)) {
+                    editor.remove(key);
+                }
+            }
+            editor.putInt(KEY_PREFS_VERSION, CURRENT_PREFS_VERSION);
+            editor.apply();
+        }
+
         String csv = prefs.getString(KEY_CHANNEL_IDS, null);
         List<Long> ids = new ArrayList<Long>();
         if (csv != null && !csv.trim().isEmpty()) {
@@ -723,21 +626,15 @@ public class MainActivity extends Activity {
         for (int i = 0; i < ids.size(); i++) {
             Long id = ids.get(i);
             String savedDvb = prefs.getString(KEY_DVB_PREFIX + id, null);
-            if ((savedDvb == null || savedDvb.isEmpty()) && i < STANDARD_GREEK_TRIPLETS_IN_ORDER.length) {
-                savedDvb = STANDARD_GREEK_TRIPLETS_IN_ORDER[i];
-            }
-            String catalogName = lookupChannelName(savedDvb);
             String savedName = prefs.getString(KEY_NAME_PREFIX + id, null);
 
             String finalName;
-            if (savedName != null && !savedName.isEmpty() && !savedName.startsWith("OTA Channel ")) {
-                finalName = savedName; // user custom override
-            } else if (catalogName != null) {
-                finalName = catalogName; // official broadcast Greek channel name
-            } else if (savedName != null && !savedName.isEmpty()) {
-                finalName = savedName;
+            if (savedName != null && !savedName.trim().isEmpty() && !isDefaultName(savedName)) {
+                finalName = savedName.trim();
+            } else if (savedDvb != null && sDiscoveredTripletToName.containsKey(savedDvb)) {
+                finalName = sDiscoveredTripletToName.get(savedDvb);
             } else {
-                finalName = "OTA Channel " + num;
+                finalName = String.format(Locale.US, "CH %02d", num);
             }
 
             mChannels.add(new ChannelEntry(id, num, finalName, savedDvb != null ? savedDvb : ""));
@@ -761,8 +658,12 @@ public class MainActivity extends Activity {
     private void refreshChannelLabels() {
         mChannelLabels.clear();
         for (ChannelEntry ch : mChannels) {
-            String numStr = ch.displayNumber < 10 ? ("0" + ch.displayNumber) : String.valueOf(ch.displayNumber);
-            mChannelLabels.add(numStr + "   " + ch.name);
+            String numStr = String.format(Locale.US, "%02d", ch.displayNumber);
+            if (isDefaultName(ch.name)) {
+                mChannelLabels.add(numStr + "   CH " + numStr);
+            } else {
+                mChannelLabels.add(numStr + "   " + ch.name);
+            }
         }
         if (mChannelAdapter != null) {
             mChannelAdapter.notifyDataSetChanged();
@@ -787,7 +688,13 @@ public class MainActivity extends Activity {
         mVideoHeight = 0;
         mAudioTracks.clear();
         mSubtitleTracks.clear();
-        mCurrentVideoStatus = "Tuning " + ch.name + " (" + ch.getUri().toString() + ") ...";
+
+        String numStr = String.format(Locale.US, "%02d", ch.displayNumber);
+        if (isDefaultName(ch.name)) {
+            mCurrentVideoStatus = "Tuning CH " + numStr + " (" + ch.getUri().toString() + ") ...";
+        } else {
+            mCurrentVideoStatus = "Tuning " + ch.name + " (" + ch.getUri().toString() + ") ...";
+        }
 
         if (mTvView != null) {
             mTvView.setStreamVolume(1.0f);
@@ -796,7 +703,7 @@ public class MainActivity extends Activity {
         }
 
         mHandler.removeCallbacks(mCheckTunedChannelLogRunnable);
-        mHandler.postDelayed(mCheckTunedChannelLogRunnable, 900);
+        mHandler.postDelayed(mCheckTunedChannelLogRunnable, 1500);
 
         if (mChannelAdapter != null) {
             mChannelAdapter.notifyDataSetChanged();
@@ -812,31 +719,60 @@ public class MainActivity extends Activity {
             public void run() {
                 try {
                     Process proc = Runtime.getRuntime().exec(new String[]{
-                        "logcat", "-d", "-t", "80", "-s", "DtvInputSession:D", "DTVFS:V", "TvPlayer:I", "DtvSetup:I"
+                        "logcat", "-d", "-t", "300", "-s", "DtvInputSession:D", "DTVFS:V", "TvPlayer:I", "DtvSetup:I", "DtvSetup:D", "DtvChannel:D", "dtv.EitHandler:V"
                     });
                     BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
                     Pattern dvbPattern = Pattern.compile("DTVFS::Open:\\d+\\s+path=/live/dvb:([0-9a-zA-Z._-]+)/media\\.ts");
+                    Pattern servicePattern = Pattern.compile("(?:Service\\s+dvb://|service:)([0-9a-zA-Z._-]+)");
                     Pattern updatePattern = Pattern.compile("\\((\\d+)-([^)]+)\\)\\s+programs\\s+updated");
+                    Pattern dumpPattern = Pattern.compile("(dvb://[0-9a-zA-Z._-]+)\\s*:\\s*(.+?)\\s+lcn=(\\d+)");
+                    Pattern chPattern = Pattern.compile("Service\\s+(dvb://[0-9a-zA-Z._-]+)\\s+created\\s+->content://android\\.media\\.tv/channel/" + currentCh.id);
 
                     String foundDvb = null;
-                    String foundEpgName = null;
+                    String foundName = null;
+                    final Map<String, String> localTripletToName = new LinkedHashMap<String, String>();
                     String line;
                     while ((line = reader.readLine()) != null) {
+                        Matcher mc = chPattern.matcher(line);
+                        if (mc.find()) {
+                            foundDvb = mc.group(1);
+                        }
                         Matcher md = dvbPattern.matcher(line);
                         if (md.find()) {
                             foundDvb = "dvb://" + md.group(1);
                         }
+                        Matcher ms = servicePattern.matcher(line);
+                        if (ms.find()) {
+                            foundDvb = "dvb://" + ms.group(1);
+                        }
+                        Matcher mDump = dumpPattern.matcher(line);
+                        if (mDump.find()) {
+                            String d = mDump.group(1);
+                            String n = mDump.group(2).trim();
+                            localTripletToName.put(d, n);
+                            sDiscoveredTripletToName.put(d, n);
+                        }
                         Matcher mu = updatePattern.matcher(line);
                         if (mu.find()) {
-                            foundEpgName = mu.group(2).trim();
+                            foundName = mu.group(2).trim();
                         }
                     }
                     reader.close();
 
-                    final String finalDvb = foundDvb;
-                    final String finalEpg = foundEpgName;
+                    if (foundDvb != null && foundName == null) {
+                        if (localTripletToName.containsKey(foundDvb)) {
+                            foundName = localTripletToName.get(foundDvb);
+                        } else if (sDiscoveredTripletToName.containsKey(foundDvb)) {
+                            foundName = sDiscoveredTripletToName.get(foundDvb);
+                        }
+                    }
 
-                    if (finalDvb != null || finalEpg != null) {
+                    android.util.Log.i("OtaTvChannels", "Tuned ch " + currentCh.id + " -> dvb=" + foundDvb + " name=" + foundName);
+
+                    final String finalDvb = foundDvb;
+                    final String finalName = foundName;
+
+                    if (finalDvb != null || finalName != null) {
                         mHandler.post(new Runnable() {
                             @Override
                             public void run() {
@@ -852,21 +788,13 @@ public class MainActivity extends Activity {
                                                     .apply();
                                             changed = true;
                                         }
-                                        if (ch.name.startsWith("OTA Channel ")) {
-                                            String catalog = lookupChannelName(ch.dvbTriplet);
-                                            if (catalog != null) {
-                                                ch.name = catalog;
-                                                changed = true;
-                                            } else if (finalEpg != null) {
-                                                ch.name = finalEpg;
-                                                changed = true;
-                                            }
-                                            if (changed) {
-                                                getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                                                        .edit()
-                                                        .putString(KEY_NAME_PREFIX + ch.id, ch.name)
-                                                        .apply();
-                                            }
+                                        if (finalName != null && !finalName.isEmpty() && isDefaultName(ch.name)) {
+                                            ch.name = finalName;
+                                            getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                                                    .edit()
+                                                    .putString(KEY_NAME_PREFIX + ch.id, finalName)
+                                                    .apply();
+                                            changed = true;
                                         }
                                         if (changed) {
                                             refreshChannelLabels();
@@ -899,8 +827,12 @@ public class MainActivity extends Activity {
     private void updateOsdText() {
         if (mOsdTitle == null || mChannels.isEmpty()) return;
         ChannelEntry ch = mChannels.get(mCurrentIndex);
-        String numStr = ch.displayNumber < 10 ? ("0" + ch.displayNumber) : String.valueOf(ch.displayNumber);
-        mOsdTitle.setText("CH " + numStr + "  —  " + ch.name);
+        String numStr = String.format(Locale.US, "%02d", ch.displayNumber);
+        if (isDefaultName(ch.name)) {
+            mOsdTitle.setText("CH " + numStr);
+        } else {
+            mOsdTitle.setText("CH " + numStr + "  —  " + ch.name);
+        }
 
         StringBuilder sub = new StringBuilder();
         if (mVideoWidth > 0 && mVideoHeight > 0) {
@@ -1227,21 +1159,10 @@ public class MainActivity extends Activity {
                 stopAutoProbe();
                 if (mFoundStartId > 0 && mFoundEndId >= mFoundStartId) {
                     List<Long> discoveredIds = new ArrayList<Long>();
-                    SharedPreferences.Editor editor = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit();
                     int count = (int) (mFoundEndId - mFoundStartId + 1);
                     for (int i = 0; i < count; i++) {
-                        long id = mFoundStartId + i;
-                        discoveredIds.add(id);
-                        if (i < STANDARD_GREEK_TRIPLETS_IN_ORDER.length) {
-                            String dvb = STANDARD_GREEK_TRIPLETS_IN_ORDER[i];
-                            editor.putString(KEY_DVB_PREFIX + id, dvb);
-                            String name = lookupChannelName(dvb);
-                            if (name != null) {
-                                editor.putString(KEY_NAME_PREFIX + id, name);
-                            }
-                        }
+                        discoveredIds.add(mFoundStartId + i);
                     }
-                    editor.apply();
                     saveChannelIdsToPrefs(discoveredIds);
                     rebuildChannelEntries(discoveredIds);
                     Toast.makeText(this,
@@ -1440,11 +1361,11 @@ public class MainActivity extends Activity {
                     for (Map.Entry<Long, String> entry : discoveredDvbs.entrySet()) {
                         long id = entry.getKey();
                         String dvb = entry.getValue();
-                        String catalog = lookupChannelName(dvb);
-                        if (catalog != null) {
-                            discoveredNames.put(id, catalog);
-                        } else if (tripletToName.containsKey(dvb)) {
+                        if (tripletToName.containsKey(dvb)) {
                             discoveredNames.put(id, tripletToName.get(dvb));
+                            sDiscoveredTripletToName.put(dvb, tripletToName.get(dvb));
+                        } else if (sDiscoveredTripletToName.containsKey(dvb)) {
+                            discoveredNames.put(id, sDiscoveredTripletToName.get(dvb));
                         }
                         if (tripletToNum.containsKey(dvb)) {
                             int num = tripletToNum.get(dvb);
@@ -1467,7 +1388,11 @@ public class MainActivity extends Activity {
                                 editor.putString(KEY_DVB_PREFIX + entry.getKey(), entry.getValue());
                             }
                             for (Map.Entry<Long, String> entry : discoveredNames.entrySet()) {
-                                editor.putString(KEY_NAME_PREFIX + entry.getKey(), entry.getValue());
+                                long chId = entry.getKey();
+                                String currentSaved = prefs.getString(KEY_NAME_PREFIX + chId, null);
+                                if (isDefaultName(currentSaved)) {
+                                    editor.putString(KEY_NAME_PREFIX + chId, entry.getValue());
+                                }
                             }
                             editor.apply();
 

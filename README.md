@@ -14,7 +14,7 @@ As a result, standard TV apps like Google Live Channels and Mochi Live TV report
 
 While third-party apps cannot query the channel list table, they can still instruct the system input service to tune to channels directly via `TvView.tune()`.
 
-**Vision Revive TV** provides a dedicated, remote-friendly UI that tunes channels directly through the hardware service and resolves station names using Greek DVB stream triplets (`ONID.TSID.SID`) and system broadcast metadata.
+**Vision Revive TV** provides a dedicated, remote-friendly UI that tunes channels directly through the hardware service and dynamically resolves station names from broadcast metadata.
 
 ## Features
 
@@ -44,9 +44,9 @@ adb shell pm grant org.hypest.visionrevivetv android.permission.READ_LOGS
 
 > **Note on `READ_LOGS` permission**:
 > Step 3 is **completely optional**.
-> - **What it's for**: The app monitors Technicolor's tuner logs to automatically match internal channel IDs with broadcast station names (e.g. "ERT 1 HD", "MEGA HD") after scanning.
-> - **If you don't grant it**: Live TV playback, hardware video decoding, audio switching, DVB subtitles, remote zapping, and antenna scanning **all work 100% without it**.
-> - Default channel IDs for Thessaloniki (Greece) are already pre-labeled in the app. If your scanned IDs differ or you are in a different region, you can easily name or rename any channel directly from your remote: press `OK` on the remote to open the side panel and select **Name Ch** to pick from a list of Greek channel presets (or type a custom name).
+> - **What it's for**: The app monitors Technicolor's tuner logs to automatically match internal channel IDs with broadcast station names (e.g. "ERT 1 HD", "MEGA HD") during scanning or channel tuning.
+> - **If you don't grant it**: Live TV playback, hardware video decoding, audio switching, DVB subtitles, remote zapping, and antenna scanning **all work 100% without it**. Channels simply use clean, neutral names (`CH 01`, `CH 02`, etc.).
+> - You can easily name or rename any channel directly from your remote at any time: press `OK` on the remote to open the side panel and select **Name Ch** to pick from a list of channel presets (or type a custom name).
 
 ### First-Time Setup
 
