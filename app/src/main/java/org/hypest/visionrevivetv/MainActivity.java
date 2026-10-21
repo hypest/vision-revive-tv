@@ -37,6 +37,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -88,6 +90,8 @@ public class MainActivity extends Activity {
         public final int displayNumber;
         public String name;
         public String dvbTriplet;
+        public String currentProgramTitle;
+        public String currentProgramGenre;
 
         public ChannelEntry(long id, int displayNumber, String name, String dvbTriplet) {
             this.id = id;
@@ -107,6 +111,7 @@ public class MainActivity extends Activity {
     private ArrayAdapter<String> mChannelAdapter;
     private LinearLayout mOsdBanner;
     private TextView mOsdTitle;
+    private TextView mOsdProgram;
     private TextView mOsdSubtitle;
     private TextView mOsdStatus;
     private TextView mNumericEntryOverlay;
@@ -319,6 +324,9 @@ public class MainActivity extends Activity {
     protected void onPause() {
         super.onPause();
         stopAutoProbe();
+        mHandler.removeCallbacks(mCheckTunedChannelLogRunnable);
+        mHandler.removeCallbacks(mCheckTunedChannelLogRetryRunnable);
+        mHandler.removeCallbacks(mPeriodicEitCheckRunnable);
         if (mTvView != null) {
             mTvView.reset();
         }
@@ -438,10 +446,18 @@ public class MainActivity extends Activity {
         mOsdTitle.setTypeface(Typeface.DEFAULT_BOLD);
         mOsdBanner.addView(mOsdTitle);
 
+        mOsdProgram = new TextView(this);
+        mOsdProgram.setTextColor(Color.rgb(255, 224, 130)); // Warm Amber / Gold
+        mOsdProgram.setTextSize(TypedValue.COMPLEX_UNIT_SP, 17);
+        mOsdProgram.setTypeface(Typeface.DEFAULT_BOLD);
+        mOsdProgram.setPadding(0, dp(2), 0, dp(1));
+        mOsdProgram.setVisibility(View.GONE);
+        mOsdBanner.addView(mOsdProgram);
+
         mOsdSubtitle = new TextView(this);
         mOsdSubtitle.setTextColor(Color.rgb(144, 202, 249));
         mOsdSubtitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
-        mOsdSubtitle.setPadding(0, dp(4), 0, dp(2));
+        mOsdSubtitle.setPadding(0, dp(2), 0, dp(2));
         mOsdBanner.addView(mOsdSubtitle);
 
         mOsdStatus = new TextView(this);
@@ -632,6 +648,21 @@ public class MainActivity extends Activity {
         }
     };
 
+    private final Runnable mCheckTunedChannelLogRetryRunnable = new Runnable() {
+        @Override
+        public void run() {
+            checkCurrentChannelLogsAsync();
+        }
+    };
+
+    private final Runnable mPeriodicEitCheckRunnable = new Runnable() {
+        @Override
+        public void run() {
+            checkCurrentChannelLogsAsync();
+            mHandler.postDelayed(mPeriodicEitCheckRunnable, 60000);
+        }
+    };
+
     private void rebuildChannelEntries(List<Long> ids) {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         mChannels.clear();
@@ -672,10 +703,11 @@ public class MainActivity extends Activity {
         mChannelLabels.clear();
         for (ChannelEntry ch : mChannels) {
             String numStr = String.format(Locale.US, "%02d", ch.displayNumber);
-            if (isDefaultName(ch.name)) {
-                mChannelLabels.add(numStr + "   CH " + numStr);
+            String titlePart = isDefaultName(ch.name) ? ("CH " + numStr) : ch.name;
+            if (ch.currentProgramTitle != null && !ch.currentProgramTitle.isEmpty()) {
+                mChannelLabels.add(numStr + "   " + titlePart + "  •  " + ch.currentProgramTitle);
             } else {
-                mChannelLabels.add(numStr + "   " + ch.name);
+                mChannelLabels.add(numStr + "   " + titlePart);
             }
         }
         if (mChannelAdapter != null) {
@@ -716,7 +748,11 @@ public class MainActivity extends Activity {
         }
 
         mHandler.removeCallbacks(mCheckTunedChannelLogRunnable);
+        mHandler.removeCallbacks(mCheckTunedChannelLogRetryRunnable);
+        mHandler.removeCallbacks(mPeriodicEitCheckRunnable);
         mHandler.postDelayed(mCheckTunedChannelLogRunnable, 1500);
+        mHandler.postDelayed(mCheckTunedChannelLogRetryRunnable, 3500);
+        mHandler.postDelayed(mPeriodicEitCheckRunnable, 60000);
 
         if (mChannelAdapter != null) {
             mChannelAdapter.notifyDataSetChanged();
@@ -742,6 +778,8 @@ public class MainActivity extends Activity {
 
                     String foundDvb = null;
                     String foundName = null;
+                    String foundProgramTitle = null;
+                    String foundProgramGenre = null;
                     final Map<String, String> localTripletToName = new LinkedHashMap<String, String>();
                     String line;
                     while ((line = reader.readLine()) != null) {
@@ -764,6 +802,24 @@ public class MainActivity extends Activity {
                             localTripletToName.put(d, n);
                             sDiscoveredTripletToName.put(d, n);
                         }
+                        if (line.contains("dtv.EitHandler:") && line.contains("Desc:{")) {
+                            try {
+                                int idx = line.indexOf("Desc:{");
+                                String jsonStr = line.substring(idx + 5).trim();
+                                JSONObject json = new JSONObject(jsonStr);
+                                JSONObject shortDesc = json.optJSONObject("short_event_desc");
+                                if (shortDesc != null) {
+                                    String evName = shortDesc.optString("event_name", null);
+                                    String genre = shortDesc.optString("text", null);
+                                    if (evName != null && !evName.trim().isEmpty()) {
+                                        foundProgramTitle = evName.trim();
+                                    }
+                                    if (genre != null && !genre.trim().isEmpty()) {
+                                        foundProgramGenre = genre.trim();
+                                    }
+                                }
+                            } catch (Exception ignored) {}
+                        }
                     }
                     reader.close();
 
@@ -775,39 +831,43 @@ public class MainActivity extends Activity {
                         }
                     }
 
-                    android.util.Log.i("OtaTvChannels", "Tuned ch " + currentCh.id + " -> dvb=" + foundDvb + " name=" + foundName);
+                    android.util.Log.i("OtaTvChannels", "Tuned ch " + currentCh.id + " -> dvb=" + foundDvb + " name=" + foundName + " prog=" + foundProgramTitle);
 
                     final String finalDvb = foundDvb;
                     final String finalName = foundName;
+                    final String finalProgramTitle = foundProgramTitle;
+                    final String finalProgramGenre = foundProgramGenre;
 
-                    if (finalDvb != null || finalName != null) {
+                    if (finalDvb != null || finalName != null || finalProgramTitle != null) {
                         mHandler.post(new Runnable() {
                             @Override
                             public void run() {
-                                if (mCurrentIndex >= 0 && mCurrentIndex < mChannels.size()) {
-                                    ChannelEntry ch = mChannels.get(mCurrentIndex);
-                                    if (ch.id == currentCh.id) {
-                                        boolean changed = false;
-                                        if (finalDvb != null && (ch.dvbTriplet == null || ch.dvbTriplet.isEmpty())) {
-                                            ch.dvbTriplet = finalDvb;
-                                            getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                                                    .edit()
-                                                    .putString(KEY_DVB_PREFIX + ch.id, finalDvb)
-                                                    .apply();
-                                            changed = true;
-                                        }
-                                        if (finalName != null && !finalName.isEmpty() && isDefaultName(ch.name)) {
-                                            ch.name = finalName;
-                                            getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                                                    .edit()
-                                                    .putString(KEY_NAME_PREFIX + ch.id, finalName)
-                                                    .apply();
-                                            changed = true;
-                                        }
-                                        if (changed) {
-                                            refreshChannelLabels();
-                                            updateOsdText();
-                                        }
+                                boolean changed = false;
+                                if (finalDvb != null && (currentCh.dvbTriplet == null || currentCh.dvbTriplet.isEmpty())) {
+                                    currentCh.dvbTriplet = finalDvb;
+                                    getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                                            .edit()
+                                            .putString(KEY_DVB_PREFIX + currentCh.id, finalDvb)
+                                            .apply();
+                                    changed = true;
+                                }
+                                if (finalName != null && !finalName.isEmpty() && isDefaultName(currentCh.name)) {
+                                    currentCh.name = finalName;
+                                    getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                                            .edit()
+                                            .putString(KEY_NAME_PREFIX + currentCh.id, finalName)
+                                            .apply();
+                                    changed = true;
+                                }
+                                if (finalProgramTitle != null && !finalProgramTitle.equals(currentCh.currentProgramTitle)) {
+                                    currentCh.currentProgramTitle = finalProgramTitle;
+                                    currentCh.currentProgramGenre = finalProgramGenre;
+                                    changed = true;
+                                }
+                                if (changed) {
+                                    refreshChannelLabels();
+                                    if (mCurrentIndex >= 0 && mCurrentIndex < mChannels.size() && mChannels.get(mCurrentIndex).id == currentCh.id) {
+                                        updateOsdText();
                                     }
                                 }
                             }
@@ -840,6 +900,20 @@ public class MainActivity extends Activity {
             mOsdTitle.setText("CH " + numStr);
         } else {
             mOsdTitle.setText("CH " + numStr + "  —  " + ch.name);
+        }
+
+        if (mOsdProgram != null) {
+            if (ch.currentProgramTitle != null && !ch.currentProgramTitle.isEmpty()) {
+                StringBuilder prog = new StringBuilder();
+                prog.append("▶  ").append(ch.currentProgramTitle);
+                if (ch.currentProgramGenre != null && !ch.currentProgramGenre.isEmpty()) {
+                    prog.append("   •   ").append(ch.currentProgramGenre);
+                }
+                mOsdProgram.setText(prog.toString());
+                mOsdProgram.setVisibility(View.VISIBLE);
+            } else {
+                mOsdProgram.setVisibility(View.GONE);
+            }
         }
 
         StringBuilder sub = new StringBuilder();
