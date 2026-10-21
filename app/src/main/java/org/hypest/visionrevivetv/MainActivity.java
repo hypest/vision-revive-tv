@@ -53,7 +53,7 @@ public class MainActivity extends Activity {
     private static final String DTV_INPUT_ID = "com.technicolor.android.dtvinput/.DtvInputService";
     private static final String PREFS_NAME = "ota_tv_prefs";
     private static final String KEY_PREFS_VERSION = "prefs_version";
-    private static final int CURRENT_PREFS_VERSION = 2;
+    private static final int CURRENT_PREFS_VERSION = 3;
     private static final String KEY_LAST_INDEX = "last_channel_index";
     private static final String KEY_CHANNEL_IDS = "channel_ids_csv";
     private static final String KEY_NAME_PREFIX = "ch_name_";
@@ -206,10 +206,22 @@ public class MainActivity extends Activity {
         }
     };
 
+    private void ensureLogcatUnthrottled() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Runtime.getRuntime().exec(new String[]{"logcat", "-P", ""});
+                } catch (Exception ignored) {}
+            }
+        }).start();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        ensureLogcatUnthrottled();
 
         loadChannelsFromPrefs();
         buildUi();
@@ -283,6 +295,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        ensureLogcatUnthrottled();
         if (mWaitingForScannerReturn) {
             mWaitingForScannerReturn = false;
             // 1. Opportunistically discover channels and names directly from logcat right away before buffers scroll
@@ -724,7 +737,6 @@ public class MainActivity extends Activity {
                     BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream()));
                     Pattern dvbPattern = Pattern.compile("DTVFS::Open:\\d+\\s+path=/live/dvb:([0-9a-zA-Z._-]+)/media\\.ts");
                     Pattern servicePattern = Pattern.compile("(?:Service\\s+dvb://|service:)([0-9a-zA-Z._-]+)");
-                    Pattern updatePattern = Pattern.compile("\\((\\d+)-([^)]+)\\)\\s+programs\\s+updated");
                     Pattern dumpPattern = Pattern.compile("(dvb://[0-9a-zA-Z._-]+)\\s*:\\s*(.+?)\\s+lcn=(\\d+)");
                     Pattern chPattern = Pattern.compile("Service\\s+(dvb://[0-9a-zA-Z._-]+)\\s+created\\s+->content://android\\.media\\.tv/channel/" + currentCh.id);
 
@@ -751,10 +763,6 @@ public class MainActivity extends Activity {
                             String n = mDump.group(2).trim();
                             localTripletToName.put(d, n);
                             sDiscoveredTripletToName.put(d, n);
-                        }
-                        Matcher mu = updatePattern.matcher(line);
-                        if (mu.find()) {
-                            foundName = mu.group(2).trim();
                         }
                     }
                     reader.close();
@@ -1307,8 +1315,6 @@ public class MainActivity extends Activity {
                             "Service\\s+(dvb://[0-9a-zA-Z._-]+)\\s+created\\s+->content://android\\.media\\.tv/channel/(\\d+)");
                     Pattern dumpPattern = Pattern.compile(
                             "(dvb://[0-9a-zA-Z._-]+)\\s*:\\s*(.+?)\\s+lcn=(\\d+)");
-                    Pattern updatePattern = Pattern.compile(
-                            "\\((\\d+)-([^)]+)\\)\\s+programs\\s+updated");
                     Pattern dtvfsPattern = Pattern.compile(
                             "DTVFS::Open:\\d+\\s+path=/live/dvb:([0-9a-zA-Z._-]+)/media\\.ts");
                     Pattern tunePattern = Pattern.compile(
@@ -1316,7 +1322,6 @@ public class MainActivity extends Activity {
 
                     final Map<String, String> tripletToName = new LinkedHashMap<String, String>();
                     final Map<String, Integer> tripletToNum = new LinkedHashMap<String, Integer>();
-                    final Map<Integer, String> numToName = new LinkedHashMap<Integer, String>();
                     Long lastSeenPlayerId = null;
 
                     String line;
@@ -1349,12 +1354,6 @@ public class MainActivity extends Activity {
                             tripletToName.put(dvb, name);
                             tripletToNum.put(dvb, lcn);
                         }
-                        Matcher mu = updatePattern.matcher(line);
-                        if (mu.find()) {
-                            int lcn = Integer.parseInt(mu.group(1));
-                            String name = mu.group(2).trim();
-                            numToName.put(lcn, name);
-                        }
                     }
                     reader.close();
 
@@ -1370,9 +1369,6 @@ public class MainActivity extends Activity {
                         if (tripletToNum.containsKey(dvb)) {
                             int num = tripletToNum.get(dvb);
                             discoveredNumbers.put(id, num);
-                            if (numToName.containsKey(num) && !discoveredNames.containsKey(id)) {
-                                discoveredNames.put(id, numToName.get(num));
-                            }
                         }
                     }
                 } catch (Exception ignored) {
